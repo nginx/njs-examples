@@ -61,7 +61,7 @@ Checking:
   Hello world!
 
   curl http://localhost/version
-  0.2.4
+  0.2.3
 
 
 Command line
