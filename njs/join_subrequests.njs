@@ -1,17 +1,17 @@
 function version(r) {
-	    r.return(200, njs.version);
+        r.return(200, njs.version);
 }
 
 function join(r) {
-	    join_subrequests(r, ['/foo', '/bar']);
+        join_subrequests(r, ['/foo', '/bar']);
 }
 
 function join_subrequests(r, subs) {
     var parts = [];
 
     function done(reply) {
-        parts.push({ uri:  reply.uri, 
-					 code: reply.status,
+        parts.push({ uri:  reply.uri,
+                     code: reply.status,
                      body: reply.responseBody });
 
         if (parts.length == subs.length) {
@@ -19,8 +19,8 @@ function join_subrequests(r, subs) {
         }
     }
 
-    for (var i in subs) { 
-		r.subrequest(subs[i], done);
-	}
+    for (var i in subs) {
+        r.subrequest(subs[i], done);
+    }
 }
 
