@@ -51,7 +51,8 @@ Running inside Docker:
 
   git clone https://github.com/xeioex/njs-examples
   cd njs-examples
-  docker run --name hello  -v $(pwd)/conf/hello.conf:/etc/nginx/nginx.conf:ro  -v $(pwd)/njs/hello.njs:/etc/nginx/hello.njs    -p 80:80 -d nginx
+  EXAMPLE=hello
+  docker run --name $EXAMPLE  -v $(pwd)/conf/$EXAMPLE.conf:/etc/nginx/nginx.conf:ro  -v $(pwd)/njs/$EXAMPLE.njs:/etc/nginx/example.njs:ro -p 80:80 -d nginx
 
 Checking:
 
