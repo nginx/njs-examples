@@ -43,7 +43,7 @@ nginx.conf:
         js_content hello;
       }
    }
-}    
+ }    
 
 example.njs:
 
