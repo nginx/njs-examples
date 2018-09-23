@@ -3,6 +3,9 @@ NGINX JavaScript examples
 =================
 
 
+Examples
+********
+
 Hello world
 ===========
 
@@ -59,3 +62,24 @@ Checking:
 
   curl http://localhost/version
   0.2.4
+
+
+Command line
+============
+
+.. code-block:: shell
+
+  docker run -i -t nginx:latest /usr/bin/njs
+
+.. code-block:: none
+
+  interactive njs 0.2.3
+
+  v.<Tab> -> the properties and prototype methods of v.
+  type console.help() for more information
+
+  >> function hi(msg) {console.log(msg)}
+  undefined
+  >> hi("Hello world")
+  'Hello world'
+  undefined
