@@ -119,9 +119,7 @@ nginx.conf:
 
 .. code-block:: nginx
 
-  load_module modules/ngx_http_js_module.so;
-    
-  events {}
+  ...
   
   http {
       js_include example.njs;
@@ -185,6 +183,8 @@ Protecting ``/secure/`` location from simple bots and web crawlers.
 nginx.conf:
 
 .. code-block:: nginx
+
+  ...
 
   http {
       js_include example.njs;
