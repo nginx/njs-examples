@@ -30,7 +30,7 @@ nginx.conf:
   events {}
   
   http {
-    js_include hello.njs; 
+    js_include example.njs; 
     
     server {
       listen 80;
