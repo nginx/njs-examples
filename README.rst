@@ -65,7 +65,7 @@ Checking:
   Hello world!
 
   curl http://localhost/version
-  0.2.3
+  0.2.4
 
 Decode URI
 ===========
@@ -249,7 +249,7 @@ Command line
 
 .. code-block:: none
 
-  interactive njs 0.2.3
+  interactive njs 0.2.4
 
   v.<Tab> -> the properties and prototype methods of v.
   type console.help() for more information
