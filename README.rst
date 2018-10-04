@@ -14,7 +14,7 @@ Running inside Docker:
   cd njs-examples
   EXAMPLE=hello
   docker run --name njs_example  -v $(pwd)/conf/$EXAMPLE.conf:/etc/nginx/nginx.conf:ro  -v $(pwd)/njs/$EXAMPLE.njs:/etc/nginx/example.njs:ro -p 80:80 -d nginx
-  
+
   # Stopping.
   docker stop njs_example && docker rm njs_example
 
@@ -26,15 +26,15 @@ nginx.conf:
 .. code-block:: nginx
 
   load_module modules/ngx_http_js_module.so;
-    
+
   events {}
-  
+
   http {
-    js_include example.njs; 
-    
+    js_include example.njs;
+
     server {
       listen 80;
-        
+
       location /version {
          js_content version;
       }
@@ -43,7 +43,7 @@ nginx.conf:
         js_content hello;
       }
    }
- }    
+ }
 
 example.njs:
 
@@ -56,7 +56,7 @@ example.njs:
   function hello(r) {
     r.return(200, "Hello world!\n");
   }
- 
+
 Checking:
 
 .. code-block:: shell
@@ -75,7 +75,7 @@ nginx.conf:
 .. code-block:: nginx
 
   ...
-  
+
   http {
       js_include example.njs;
 
@@ -105,11 +105,64 @@ Checking:
 
 .. code-block:: shell
 
-  curl -G http://localhost/foo --data-urlencode "foo=привет" 
+  curl -G http://localhost/foo --data-urlencode "foo=привет"
   %D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82
-  
-  curl -G http://localhost/dec_foo --data-urlencode "foo=привет" 
+
+  curl -G http://localhost/dec_foo --data-urlencode "foo=привет"
   привет
+
+Injecting HTTP header using stream proxy
+========================================
+
+nginx.conf:
+
+.. code-block:: nginx
+
+  ...
+
+  stream {
+      js_include example.njs;
+
+      server {
+            listen 80;
+
+            proxy_pass 127.0.0.1:8080;
+            js_filter inject_header;
+      }
+  }
+
+  ...
+
+example.njs:
+
+.. code-block:: js
+
+    function inject_header(s) {
+        inject_my_header(s, 'Foo: my_foo');
+    }
+
+    function inject_my_header(s, header) {
+        var req = '';
+
+        s.on('upload', function(data, flags) {
+            req += data;
+            var n = req.search('\n');
+            if (n != -1) {
+                var rest = req.substr(n + 1);
+                req = req.substr(0, n + 1);
+                s.send(req + header + '\r\n' + rest, flags);
+                s.off('upload');
+            }
+        });
+    }
+
+Checking:
+
+.. code-block:: shell
+
+  curl http://localhost/
+  my_foo
+
 
 Subrequests join
 ================
@@ -120,7 +173,7 @@ nginx.conf:
 .. code-block:: nginx
 
   ...
-  
+
   http {
       js_include example.njs;
 
@@ -235,7 +288,7 @@ Checking:
   curl: (47) Maximum (50) redirects followed
 
   curl http://127.0.0.1/secure/r --cookie-jar cookie.txt
-  302 
+  302
 
   curl http://127.0.0.1/secure/r --cookie cookie.txt
   PASSED
