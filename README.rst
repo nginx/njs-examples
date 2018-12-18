@@ -13,10 +13,10 @@ Running inside Docker:
   git clone https://github.com/xeioex/njs-examples
   cd njs-examples
   EXAMPLE=hello
-  docker run --name njs_example  -v $(pwd)/conf/$EXAMPLE.conf:/etc/nginx/nginx.conf:ro  -v $(pwd)/njs/$EXAMPLE.njs:/etc/nginx/example.njs:ro -p 80:80 -d nginx
+  docker run --rm --name njs_example  -v $(pwd)/conf/$EXAMPLE.conf:/etc/nginx/nginx.conf:ro  -v $(pwd)/njs/$EXAMPLE.njs:/etc/nginx/example.njs:ro -p 80:80 -d nginx
 
   # Stopping.
-  docker stop njs_example && docker rm njs_example
+  docker stop njs_example
 
 Hello world
 ===========
