@@ -47,12 +47,6 @@ function resolv(r) {
     try {
         var map = open_db();
         var uri = r.variables.request_uri.split("?")[0];
-
-        if (!uri) {
-            r.return(400, "Can't find \"X-Original-URI\" header, required");
-            return;
-        }
-
         var mapped_uri = map[uri];
 
         r.headersOut['Route'] = mapped_uri ? mapped_uri : uri;
