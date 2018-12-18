@@ -49,7 +49,7 @@ function resolv(r) {
 		var uri = r.headersIn['X-Original-URI'].split("?")[0];
 
 		if (!uri) {
-			r.return(400, "empty request body, \"uri\" expected");
+			r.return(400, "Can't find \"X-Original-URI\" header, required");
 			return;
 		}
 
