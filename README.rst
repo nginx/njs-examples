@@ -341,7 +341,7 @@ example.njs:
   curl http://localhost/read
   200 AAABBBCCC
 
-  curl http://localhost/flush
+  curl http://localhost/flush -X POST
   200
 
   curl http://localhost/read
