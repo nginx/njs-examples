@@ -374,7 +374,7 @@ nginx.conf:
 
             location / {
                 auth_request /resolv;
-                auth_request_set $route $upstream_http_route;
+                auth_request_set $route $sent_http_route;
 
                 proxy_pass http://backend$route$is_args$args;
             }
@@ -382,10 +382,7 @@ nginx.conf:
             location = /resolv {
                 internal;
 
-                proxy_pass http://127.0.0.1:8090/resolv;
-                proxy_pass_request_body off;
-                proxy_set_header Content-Length "";
-                proxy_set_header X-Original-URI $request_uri;
+                js_content resolv;
             }
       }
 
@@ -401,7 +398,7 @@ example.njs:
     function resolv(r) {
         try {
             var map = open_db();
-            var uri = r.headersIn['X-Original-URI'].split("?")[0];
+            var uri = r.variables.request_uri.split("?")[0];
 
             if (!uri) {
                 r.return(400, "Can't find \"X-Original-URI\" header, required");
