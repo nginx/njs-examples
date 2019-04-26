@@ -13,7 +13,7 @@ Running inside Docker:
   git clone https://github.com/xeioex/njs-examples
   cd njs-examples
   EXAMPLE=hello
-  docker run --rm --name njs_example  -v $(pwd)/conf/$EXAMPLE.conf:/etc/nginx/nginx.conf:ro  -v $(pwd)/njs/$EXAMPLE.njs:/etc/nginx/example.njs:ro -p 80:80 -p 8090:8090 -d nginx
+  docker run --rm --name njs_example  -v $(pwd)/conf/$EXAMPLE.conf:/etc/nginx/nginx.conf:ro  -v $(pwd)/njs/$EXAMPLE.js:/etc/nginx/example.js:ro -p 80:80 -p 8090:8090 -d nginx
 
   # Stopping.
   docker stop njs_example
@@ -30,7 +30,7 @@ nginx.conf:
   events {}
 
   http {
-    js_include example.njs;
+    js_include example.js;
 
     server {
       listen 80;
@@ -45,7 +45,7 @@ nginx.conf:
    }
  }
 
-example.njs:
+example.js:
 
 .. code-block:: js
 
@@ -77,7 +77,7 @@ nginx.conf:
   ...
 
   http {
-      js_include example.njs;
+      js_include example.js;
 
       js_set $dec_foo dec_foo;
 
@@ -93,7 +93,7 @@ nginx.conf:
       }
   }
 
-example.njs:
+example.js:
 
 .. code-block:: js
 
@@ -121,7 +121,7 @@ nginx.conf:
   ...
 
   stream {
-      js_include example.njs;
+      js_include example.js;
 
       server {
             listen 80;
@@ -133,7 +133,7 @@ nginx.conf:
 
   ...
 
-example.njs:
+example.js:
 
 .. code-block:: js
 
@@ -175,7 +175,7 @@ nginx.conf:
   ...
 
   http {
-      js_include example.njs;
+      js_include example.js;
 
       server {
             listen 80;
@@ -194,7 +194,7 @@ nginx.conf:
       }
  }
 
-example.njs:
+example.js:
 
 .. code-block:: js
 
@@ -240,7 +240,7 @@ nginx.conf:
   ...
 
   http {
-      js_include example.njs;
+      js_include example.js;
 
       js_set $new_foo create_secure_link;
 
@@ -267,7 +267,7 @@ nginx.conf:
       }
   }
 
-example.njs:
+example.js:
 
 .. code-block:: js
 
@@ -297,7 +297,7 @@ Checking:
 File IO
 ================
 
-example.njs:
+example.js:
 
 .. code-block:: js
 
@@ -357,7 +357,7 @@ nginx.conf:
   ...
 
   http {
-      js_include example.njs;
+      js_include example.js;
 
       upstream backend {
         server 127.0.0.1:8080;
@@ -389,7 +389,7 @@ nginx.conf:
       ...
   }
 
-example.njs:
+example.js:
 
 .. code-block:: js
 
