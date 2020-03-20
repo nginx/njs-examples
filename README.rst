@@ -67,7 +67,7 @@ Checking:
   curl http://localhost/version
   0.2.4
 
-Decode URI
+Getting arbitrary field from JWT as a nginx variable
 ===========
 
 nginx.conf:
@@ -79,16 +79,12 @@ nginx.conf:
   http {
       js_include example.js;
 
-      js_set $dec_foo dec_foo;
+      js_set $jwt_payload_name jwt_payload_name;
 
       server {
   ...
-            location /foo {
-                return 200 $arg_foo;
-            }
-
-            location /dec_foo {
-                return 200 $dec_foo;
+            location /jwt {
+                return 200 $jwt_payload_name;
             }
       }
   }
@@ -97,19 +93,23 @@ example.js:
 
 .. code-block:: js
 
-  function dec_foo(r) {
-    return decodeURIComponent(r.args.foo);
-  }
+    function jwt(data) {
+        var parts = data.split('.').slice(0,2)
+            .map(v=>String.bytesFrom(v, 'base64url'))
+            .map(JSON.parse);
+        return { headers:parts[0], payload: parts[1] };
+    }
+
+    function jwt_payload_name(r) {
+        return jwt(r.headersIn.Authorization.slice(7)).payload.name;
+    }
 
 Checking:
 
 .. code-block:: shell
 
-  curl -G http://localhost/foo --data-urlencode "foo=привет"
-  %D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82
-
-  curl -G http://localhost/dec_foo --data-urlencode "foo=привет"
-  привет
+  curl 'http://localhost/jwt' -H "Authorization: Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NSIsIm5hbWUiOiJKb2huIEdvbGQiLCJhZG1pbiI6dHJ1ZX0K.LIHjWCBORSWMEibq-tnT8ue_deUqZx1K0XxCOXZRrBI"
+  John Gold
 
 Injecting HTTP header using stream proxy
 ========================================
