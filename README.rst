@@ -12,13 +12,13 @@ Running inside Docker:
 
   git clone https://github.com/xeioex/njs-examples
   cd njs-examples
-  EXAMPLE=hello
+  EXAMPLE='hello'
   docker run --rm --name njs_example  -v $(pwd)/conf/$EXAMPLE.conf:/etc/nginx/nginx.conf:ro  -v $(pwd)/njs/$EXAMPLE.js:/etc/nginx/example.js:ro -p 80:80 -p 8090:8090 -d nginx
 
   # Stopping.
   docker stop njs_example
 
-Hello world
+Hello world [hello]
 ===========
 
 nginx.conf:
@@ -67,7 +67,7 @@ Checking:
   curl http://localhost/version
   0.2.4
 
-Getting arbitrary field from JWT as a nginx variable
+Getting arbitrary field from JWT as a nginx variable [jwt]
 ===========
 
 nginx.conf:
@@ -111,7 +111,7 @@ Checking:
   curl 'http://localhost/jwt' -H "Authorization: Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NSIsIm5hbWUiOiJKb2huIEdvbGQiLCJhZG1pbiI6dHJ1ZX0K.LIHjWCBORSWMEibq-tnT8ue_deUqZx1K0XxCOXZRrBI"
   John Gold
 
-Injecting HTTP header using stream proxy
+Injecting HTTP header using stream proxy [stream/inject_header]
 ========================================
 
 nginx.conf:
@@ -164,7 +164,7 @@ Checking:
   my_foo
 
 
-Subrequests join
+Subrequests join [join_subrequests]
 ================
 Combining the results of several subrequests asynchronously into a single JSON reply.
 
@@ -229,7 +229,7 @@ Checking:
 
 
 
-Secure hash
+Secure hash [secure_link_hash]
 ================
 Protecting ``/secure/`` location from simple bots and web crawlers.
 
@@ -294,7 +294,7 @@ Checking:
   PASSED
 
 
-File IO
+File IO [file_io]
 ================
 
 example.js:
@@ -347,7 +347,7 @@ example.js:
   curl http://localhost/read
   200 <empty reply>
 
-Complex redirects using njs file map.
+Complex redirects using njs file map [complex_redirects]
 ========================================
 
 nginx.conf:
