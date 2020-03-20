@@ -79,7 +79,7 @@ nginx.conf:
   http {
       js_include example.js;
 
-      js_set $jwt_payload_name jwt_payload_name;
+      js_set $jwt_payload_sub jwt_payload_sub;
 
       server {
   ...
@@ -100,16 +100,76 @@ example.js:
         return { headers:parts[0], payload: parts[1] };
     }
 
-    function jwt_payload_name(r) {
-        return jwt(r.headersIn.Authorization.slice(7)).payload.name;
+    function jwt_payload_sub(r) {
+        return jwt(r.headersIn.Authorization.slice(7)).payload.sub;
     }
 
 Checking:
 
 .. code-block:: shell
 
-  curl 'http://localhost/jwt' -H "Authorization: Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NSIsIm5hbWUiOiJKb2huIEdvbGQiLCJhZG1pbiI6dHJ1ZX0K.LIHjWCBORSWMEibq-tnT8ue_deUqZx1K0XxCOXZRrBI"
-  John Gold
+  curl 'http://localhost/jwt' -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImV4cCI6MTU4NDcyMzA4NX0.eyJpc3MiOiJuZ2lueCIsInN1YiI6ImFsaWNlIiwiZm9vIjoxMjMsImJhciI6InFxIiwienl4IjpmYWxzZX0.Kftl23Rvv9dIso1RuZ8uHaJ83BkKmMtTwch09rJtwgk"
+  alice
+
+Generating JWT token [gen_hs_jwt]
+===========
+
+nginx.conf:
+
+.. code-block:: nginx
+
+  ...
+
+  http {
+      js_include example.js;
+
+      js_set $jwt jwt;
+
+      server {
+  ...
+            location /jwt {
+                return 200 $jwt;
+            }
+      }
+  }
+
+example.js:
+
+.. code-block:: js
+
+    function generate_hs256_jwt(claims, key, valid) {
+        var header = { typ: "JWT",
+                       alg: "HS256",
+                       exp: Math.floor(Date.now()/1000) + valid };
+
+        var s = [header, claims].map(JSON.stringify)
+                                .map(v=>v.toBytes())
+                                .map(v=>v.toString('base64url'))
+                                .join('.');
+
+        var h = require('crypto').createHmac('sha256', key);
+
+        return s + '.' + h.update(s).digest().toString('base64url');
+    }
+
+    function jwt(r) {
+        var claims = {
+            iss: "nginx",
+            sub: "alice",
+            foo: 123,
+            bar: "qq",
+            zyx: false
+        };
+
+        return generate_hs256_jwt(claims, 'foo', 600);
+    }
+
+Checking:
+
+.. code-block:: shell
+
+  curl 'http://localhost/jwt'
+  eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImV4cCI6MTU4NDcyMjk2MH0.eyJpc3MiOiJuZ2lueCIsInN1YiI6ImFsaWNlIiwiZm9vIjoxMjMsImJhciI6InFxIiwienl4IjpmYWxzZX0.GxfKkJSWI4oq5sGBg4aKRAcFeKmiA6v4TR43HbcP2X8
 
 Injecting HTTP header using stream proxy [stream/inject_header]
 ========================================
