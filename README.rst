@@ -454,13 +454,35 @@ Command line
 
 .. code-block:: none
 
-  interactive njs 0.2.4
+    interactive njs 0.3.9
 
-  v.<Tab> -> the properties and prototype methods of v.
-  type console.help() for more information
+    v.<Tab> -> the properties and prototype methods of v.
 
-  >> function hi(msg) {console.log(msg)}
-  undefined
-  >> hi("Hello world")
-  'Hello world'
-  undefined
+    >> globalThis
+    global {
+     njs: njs {
+      version: '0.3.9'
+     },
+     global: [Circular],
+     process: process {
+      argv: [
+       '/usr/bin/njs'
+      ],
+      env: {
+       PATH: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+       HOSTNAME: 'f777c149d4f8',
+       TERM: 'xterm',
+       NGINX_VERSION: '1.17.9',
+       NJS_VERSION: '0.3.9',
+       PKG_RELEASE: '1~buster',
+       HOME: '/root'
+      }
+     },
+     console: {
+      log: [Function: native],
+      dump: [Function: native],
+      time: [Function: native],
+      timeEnd: [Function: native]
+     },
+     print: [Function: native]
+    }
