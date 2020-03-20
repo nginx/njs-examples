@@ -235,6 +235,92 @@ Checking:
   [{"uri":"/foo","code":200,"body":"FOO"},{"uri":"/bar","code":200,"body":"BAR"}]
 
 
+Subrequests chaining [subrequests_chaining]
+================
+Subrequests chaining using JS promises.
+
+nginx.conf:
+
+.. code-block:: nginx
+
+  ...
+
+  http {
+      js_include example.js;
+
+      server {
+            listen 80;
+
+            location / {
+                js_content process;
+            }
+
+            location = /auth {
+                internal;
+                proxy_pass http://localhost:8080;
+            }
+
+            location = /backend {
+                internal;
+                proxy_pass http://localhost:8090;
+            }
+      }
+
+      ...
+ }
+
+example.js:
+
+.. code-block:: js
+
+    function process(r) {
+        r.subrequest('/auth')
+            .then(reply => JSON.parse(reply.responseBody))
+            .then(response => {
+                if (!response['token']) {
+                    throw new Error("token is not available");
+                }
+                return response['token'];
+            })
+        .then(token => {
+            r.subrequest('/backend', `token=${token}`)
+                .then(reply => r.return(reply.status, reply.responseBody));
+        })
+        .catch(e => r.return(500, e));
+    }
+
+    function authenticate(r) {
+        if (r.headersIn.Authorization.slice(7) === 'secret') {
+            r.return(200, JSON.stringify({status: "OK", token:42}));
+            return;
+        }
+
+        r.return(403, JSON.stringify({status: "INVALID"}));
+    }
+
+    function backend(r) {
+        r.return(200, `Token is ${r.args.token}`);
+    }
+
+Checking:
+
+.. code-block:: shell
+
+  curl http://localhost/start -H 'Authorization: Bearer secret'
+  Token is 42
+
+  curl http://localhost/start
+  SyntaxError: Unexpected token at position 0
+  at JSON.parse (native)
+  at anonymous (example.js:3)
+  at native (native)
+  at main (native)
+
+  curl http://localhost/start -H 'Authorization: Bearer secre'
+  Error: token is not available
+  at anonymous (example.js:4)
+  at native (native)
+  at main (native)
 
 Secure hash [secure_link_hash]
 ================
