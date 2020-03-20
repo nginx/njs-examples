@@ -1,3 +1,5 @@
+// Injecting HTTP header using stream proxy
+
 function inject_header(s) {
     inject_my_header(s, 'Foo: my_foo');
 }
