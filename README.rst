@@ -84,7 +84,7 @@ nginx.conf:
       server {
   ...
             location /jwt {
-                return 200 $jwt_payload_name;
+                return 200 $jwt_payload_sub;
             }
       }
   }
