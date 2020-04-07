@@ -330,6 +330,8 @@ nginx.conf:
 
 .. code-block:: nginx
 
+  env JWT_GEN_KEY;
+
   ...
 
   http {
@@ -339,6 +341,8 @@ nginx.conf:
 
       server {
             listen 80;
+
+            ...
 
             location /secure/ {
                 error_page 403 = @login;
@@ -366,13 +370,15 @@ example.js:
 
   function create_secure_link(r) {
     return require('crypto').createHash('md5')
-                            .update(r.uri).update(" mykey")
+                            .update(r.uri).update(process.env.JWT_GEN_KEY)
                             .digest('base64url');
   }
 
 Checking:
 
 .. code-block:: shell
+
+  docker run --rm --name njs_example -e JWT_GEN_KEY=" mykey" ...
 
   curl http://127.0.0.1/secure/r
   302
