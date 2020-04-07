@@ -118,6 +118,8 @@ nginx.conf:
 
 .. code-block:: nginx
 
+  env JWT_GEN_KEY;
+
   ...
 
   http {
@@ -161,12 +163,14 @@ example.js:
             zyx: false
         };
 
-        return generate_hs256_jwt(claims, 'foo', 600);
+        return generate_hs256_jwt(claims, process.env.JWT_GEN_KEY, 600);
     }
 
 Checking:
 
 .. code-block:: shell
+
+  docker run --rm --name njs_example -e JWT_GEN_KEY="foo" ...
 
   curl 'http://localhost/jwt'
   eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImV4cCI6MTU4NDcyMjk2MH0.eyJpc3MiOiJuZ2lueCIsInN1YiI6ImFsaWNlIiwiZm9vIjoxMjMsImJhciI6InFxIiwienl4IjpmYWxzZX0.GxfKkJSWI4oq5sGBg4aKRAcFeKmiA6v4TR43HbcP2X8

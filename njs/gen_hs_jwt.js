@@ -26,5 +26,5 @@ function jwt(r) {
         zyx: false
     };
 
-    return generate_hs256_jwt(claims, 'foo', 600);
+    return generate_hs256_jwt(claims, process.env.JWT_GEN_KEY, 600);
 }
