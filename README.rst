@@ -450,7 +450,7 @@ example.js:
   curl http://localhost/read
   200 <empty reply>
 
-Complex redirects using njs file map [complex_redirects]
+Choosing upstream in stream based on the underlying protocol [stream/detect_http]
 ========================================
 
 nginx.conf:
@@ -459,94 +459,61 @@ nginx.conf:
 
   ...
 
-  http {
-      js_include example.js;
+  stream {
+        js_include example.js;
 
-      upstream backend {
-        server 127.0.0.1:8080;
-      }
+        js_set $upstream upstream;
 
-      server {
-            listen 80;
+        upstream httpback {
+            server 127.0.0.1:8080;
+        }
 
-            location = /version {
-                js_content version;
-            }
+        upstream tcpback {
+            server 127.0.0.1:3001;
+        }
 
-            # PROXY
+        server {
+              listen 80;
 
-            location / {
-                auth_request /resolv;
-                auth_request_set $route $sent_http_route;
+              js_preread  preread;
 
-                proxy_pass http://backend$route$is_args$args;
-            }
-
-            location = /resolv {
-                internal;
-
-                js_content resolv;
-            }
-      }
-
-      ...
+              proxy_pass $upstream;
+        }
   }
+
 
 example.js:
 
 .. code-block:: js
 
-    ...
+    var is_http = 0;
 
-    function resolv(r) {
-        try {
-            var map = open_db();
-            var uri = r.variables.request_uri.split("?")[0];
-            var mapped_uri = map[uri];
+    function preread(s) {
+        s.on('upload', function (data, flags) {
+            var n = data.indexOf('\r\n');
+            if (n != -1 && data.substr(0, n - 1).endsWith(" HTTP/1.")) {
+                is_http = 1;
+            }
 
-            r.headersOut['Route'] = mapped_uri ? mapped_uri : uri;
-            r.return(200);
-
-        } catch (e) {
-            r.return(500, "resolv: " + e);
-        }
+            if (data.length || flags.last) {
+                s.done();
+            }
+        });
     }
-    ...
+
+    function upstream(s) {
+        return is_http ? "httpback" : "tcpback";
+    }
 
 Checking:
 
 .. code-block:: shell
 
-  curl http://localhost/CCC?a=1
-  200 /CCC?a=1
+  curl http://localhost/
+  HTTPBACK
 
-  curl http://localhost:8090/map
-  200 {}
-
-  curl http://localhost:8090/add -X POST --data '{"from": "/CCC", "to": "/AA"}'
-  200
-
-  curl http://localhost:8090/add -X POST --data '{"from": "/BBB", "to": "/DD"}'
-  200
-
-  curl http://localhost/CCC?a=1
-  200 /AA?a=1
-
-  curl http://localhost/BB?a=1
-  200 /BB?a=1
-
-  curl http://localhost:8090/map
-  200 {"/CCC":"/AA","/BBB":"/DD"}
-
-  curl http://localhost:8090/remove -X POST --data '{"from": "/CCC"}'
-  200
-
-  curl http://localhost:8090/map
-  200 {"/BBB":"/DD"}
-
-  curl http://localhost/CCC?a=1
-  200 /CCC?a=1
-
+  echo 'ABC' | nc 127.0.0.1 80 -q1
+  TCPBACK
 
 Command line
 ============
