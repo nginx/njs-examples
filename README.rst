@@ -140,12 +140,11 @@ example.js:
 .. code-block:: js
 
     function generate_hs256_jwt(claims, key, valid) {
-        var header = { typ: "JWT",
-                       alg: "HS256",
-                       exp: Math.floor(Date.now()/1000) + valid };
+        var header = { typ: "JWT",  alg: "HS256" };
+        var claims = Object.assign(claims, {exp: Math.floor(Date.now()/1000) + valid});
 
         var s = [header, claims].map(JSON.stringify)
-                                .map(v=>v.toBytes())
+                                .map(v=>v.toUTF8())
                                 .map(v=>v.toString('base64url'))
                                 .join('.');
 
