@@ -566,7 +566,7 @@ Command line
 
 .. code-block:: none
 
-    interactive njs 0.3.9
+    interactive njs 0.4.1
 
     v.<Tab> -> the properties and prototype methods of v.
 
