@@ -1,7 +1,3 @@
-function version(r) {
-        r.return(200, njs.version);
-}
-
 function join(r) {
         join_subrequests(r, ['/foo', '/bar']);
 }
@@ -24,3 +20,4 @@ function join_subrequests(r, subs) {
     }
 }
 
+export default {join}

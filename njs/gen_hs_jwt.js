@@ -1,7 +1,3 @@
-function version(r) {
-    r.return(200, njs.version);
-}
-
 function generate_hs256_jwt(claims, key, valid) {
     var header = { typ: "JWT",  alg: "HS256" };
 	var claims = Object.assign(claims, {exp: Math.floor(Date.now()/1000) + valid});
@@ -27,3 +23,5 @@ function jwt(r) {
 
     return generate_hs256_jwt(claims, process.env.JWT_GEN_KEY, 600);
 }
+
+export default {jwt};

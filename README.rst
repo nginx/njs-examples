@@ -6,6 +6,8 @@ NGINX JavaScript examples
 Examples
 ********
 
+Note: the examples below works with njs >= `0.4.0 <http://nginx.org/en/docs/njs/changes.html#njs0.4.0>`_, see `this version <https://github.com/xeioex/njs-examples/tree/b1c992c742b5d41dea2e087ebea98e098543a341>`_ for older releases.
+
 Running inside Docker:
 
 .. code-block:: shell
@@ -13,7 +15,7 @@ Running inside Docker:
   git clone https://github.com/xeioex/njs-examples
   cd njs-examples
   EXAMPLE='hello'
-  docker run --rm --name njs_example  -v $(pwd)/conf/$EXAMPLE.conf:/etc/nginx/nginx.conf:ro  -v $(pwd)/njs/$EXAMPLE.js:/etc/nginx/example.js:ro -p 80:80 -p 8090:8090 -d nginx
+  docker run --rm --name njs_example  -v $(pwd)/conf/$EXAMPLE.conf:/etc/nginx/nginx.conf:ro  -v $(pwd)/njs/$EXAMPLE.js:/etc/nginx/example.js:ro -v $(pwd)/njs/utils.js:/etc/nginx/utils.js:ro -p 80:80 -p 8090:8090 -d nginx
 
   # Stopping.
   docker stop njs_example
@@ -30,17 +32,18 @@ nginx.conf:
   events {}
 
   http {
-    js_include example.js;
+    js_import utils.js;
+    js_import main from example.js;
 
     server {
       listen 80;
 
-      location /version {
-         js_content version;
+      location = /version {
+         js_content utils.version;
       }
 
-      location /hello {
-        js_content hello;
+      location / {
+        js_content main.hello;
       }
    }
  }
@@ -49,23 +52,21 @@ example.js:
 
 .. code-block:: js
 
-  function version(r) {
-    r.return(200, njs.version);
-  }
-
   function hello(r) {
     r.return(200, "Hello world!\n");
   }
+
+  export default {hello}
 
 Checking:
 
 .. code-block:: shell
 
-  curl http://localhost/hello
+  curl http://localhost/
   Hello world!
 
   curl http://localhost/version
-  0.2.4
+  0.4.1
 
 Getting arbitrary field from JWT as a nginx variable [jwt]
 ===========
@@ -74,19 +75,18 @@ nginx.conf:
 
 .. code-block:: nginx
 
-  ...
-
   http {
-      js_include example.js;
+    js_import utils.js;
+    js_import main from example.js;
 
-      js_set $jwt_payload_sub jwt_payload_sub;
+    js_set $jwt_payload_sub main.jwt_payload_sub;
 
-      server {
+    server {
   ...
-            location /jwt {
-                return 200 $jwt_payload_sub;
-            }
-      }
+        location /jwt {
+            return 200 $jwt_payload_sub;
+        }
+    }
   }
 
 example.js:
@@ -103,6 +103,8 @@ example.js:
     function jwt_payload_sub(r) {
         return jwt(r.headersIn.Authorization.slice(7)).payload.sub;
     }
+
+    export default {jwt_payload_sub}
 
 Checking:
 
@@ -123,16 +125,17 @@ nginx.conf:
   ...
 
   http {
-      js_include example.js;
+    js_import utils.js;
+    js_import main from example.js;
 
-      js_set $jwt jwt;
+    js_set $jwt main.jwt;
 
-      server {
+    server {
   ...
-            location /jwt {
-                return 200 $jwt;
-            }
-      }
+        location /jwt {
+            return 200 $jwt;
+        }
+    }
   }
 
 example.js:
@@ -165,6 +168,8 @@ example.js:
         return generate_hs256_jwt(claims, process.env.JWT_GEN_KEY, 600);
     }
 
+    export default {jwt}
+
 Checking:
 
 .. code-block:: shell
@@ -185,23 +190,24 @@ nginx.conf:
   ...
 
   http {
-      js_include example.js;
+    js_import utils.js;
+    js_import main from example.js;
 
-      server {
-            listen 80;
+    server {
+          listen 80;
 
-            location /join {
-                js_content join;
-            }
+          location /join {
+              js_content main.join;
+          }
 
-            location /foo {
-                proxy_pass http://localhost:8080;
-            }
+          location /foo {
+              proxy_pass http://localhost:8080;
+          }
 
-            location /bar {
-                proxy_pass http://localhost:8090;
-            }
-      }
+          location /bar {
+              proxy_pass http://localhost:8090;
+          }
+    }
  }
 
 example.js:
@@ -230,6 +236,8 @@ example.js:
       }
   }
 
+  export default {join}
+
 Checking:
 
 .. code-block:: shell
@@ -249,27 +257,28 @@ nginx.conf:
   ...
 
   http {
-      js_include example.js;
+    js_import utils.js;
+    js_import main from example.js;
 
-      server {
-            listen 80;
+    server {
+          listen 80;
 
-            location / {
-                js_content process;
-            }
+          location / {
+              js_content main.process;
+          }
 
-            location = /auth {
-                internal;
-                proxy_pass http://localhost:8080;
-            }
+          location = /auth {
+              internal;
+              proxy_pass http://localhost:8080;
+          }
 
-            location = /backend {
-                internal;
-                proxy_pass http://localhost:8090;
-            }
-      }
+          location = /backend {
+              internal;
+              proxy_pass http://localhost:8090;
+          }
+    }
 
-      ...
+    ...
  }
 
 example.js:
@@ -301,9 +310,7 @@ example.js:
         r.return(403, JSON.stringify({status: "INVALID"}));
     }
 
-    function backend(r) {
-        r.return(200, `Token is ${r.args.token}`);
-    }
+    export default {process, authenticate}
 
 Checking:
 
@@ -338,32 +345,33 @@ nginx.conf:
   ...
 
   http {
-      js_include example.js;
+    js_import utils.js;
+    js_import main from example.js;
 
-      js_set $new_foo create_secure_link;
+    js_set $new_foo main.create_secure_link;
 
-      server {
-            listen 80;
+    server {
+          listen 80;
 
-            ...
+          ...
 
-            location /secure/ {
-                error_page 403 = @login;
+          location /secure/ {
+              error_page 403 = @login;
 
-                secure_link $cookie_foo;
-                secure_link_md5 "$uri mykey";
+              secure_link $cookie_foo;
+              secure_link_md5 "$uri mykey";
 
-                if ($secure_link = "") {
-                        return 403;
-                }
+              if ($secure_link = "") {
+                      return 403;
+              }
 
-                proxy_pass http://localhost:8080;
-            }
+              proxy_pass http://localhost:8080;
+          }
 
-            location @login {
-                add_header Set-Cookie "foo=$new_foo; Max-Age=60";
-                return 302 $request_uri;
-            }
+          location @login {
+              add_header Set-Cookie "foo=$new_foo; Max-Age=60";
+              return 302 $request_uri;
+          }
       }
   }
 
@@ -376,6 +384,8 @@ example.js:
                             .update(r.uri).update(process.env.JWT_GEN_KEY)
                             .digest('base64url');
   }
+
+  export default {create_secure_link}
 
 Checking:
 
@@ -398,6 +408,34 @@ Checking:
 
 File IO [file_io]
 ================
+
+nginx.conf:
+
+.. code-block:: nginx
+
+    http {
+      js_import utils.js;
+      js_import main from example.js;
+
+      server {
+            listen 80;
+
+            location /version {
+                js_content utils.version;
+            }
+
+            location /push {
+                js_content main.push;
+            }
+
+            location /flush {
+                js_content main.flush;
+            }
+
+            location /read {
+                js_content main.read;
+            }
+    }
 
 example.js:
 
@@ -425,6 +463,8 @@ example.js:
 
           r.return(200, data);
   }
+
+  export default {push, flush, read}
 
 .. code-block:: shell
 
@@ -459,25 +499,26 @@ nginx.conf:
   ...
 
   stream {
-        js_include example.js;
+    js_import utils.js;
+    js_import main from example.js;
 
-        js_set $upstream upstream;
+    js_set $upstream main.upstream_type;
 
-        upstream httpback {
-            server 127.0.0.1:8080;
-        }
+    upstream httpback {
+        server 127.0.0.1:8080;
+    }
 
-        upstream tcpback {
-            server 127.0.0.1:3001;
-        }
+    upstream tcpback {
+        server 127.0.0.1:3001;
+    }
 
-        server {
-              listen 80;
+    server {
+          listen 80;
 
-              js_preread  preread;
+          js_preread  main.detect_http;
 
-              proxy_pass $upstream;
-        }
+          proxy_pass $upstream;
+    }
   }
 
 
@@ -487,7 +528,7 @@ example.js:
 
     var is_http = 0;
 
-    function preread(s) {
+    function detect_http(s) {
         s.on('upload', function (data, flags) {
             var n = data.indexOf('\r\n');
             if (n != -1 && data.substr(0, n - 1).endsWith(" HTTP/1.")) {
@@ -500,9 +541,11 @@ example.js:
         });
     }
 
-    function upstream(s) {
+    function upstream_type(s) {
         return is_http ? "httpback" : "tcpback";
     }
+
+    export default {detect_http, upstream_type}
 
 Checking:
 
@@ -529,29 +572,31 @@ Command line
 
     >> globalThis
     global {
-     njs: njs {
-      version: '0.3.9'
-     },
-     global: [Circular],
-     process: process {
-      argv: [
-       '/usr/bin/njs'
-      ],
-      env: {
-       PATH: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
-       HOSTNAME: 'f777c149d4f8',
-       TERM: 'xterm',
-       NGINX_VERSION: '1.17.9',
-       NJS_VERSION: '0.3.9',
-       PKG_RELEASE: '1~buster',
-       HOME: '/root'
-      }
-     },
-     console: {
+     console: Console {
       log: [Function: native],
       dump: [Function: native],
       time: [Function: native],
       timeEnd: [Function: native]
      },
-     print: [Function: native]
+     njs: njs {
+      version: '0.4.1'
+     },
+     print: [Function: native],
+     global: [Circular],
+     process: process {
+      argv: [
+       '/usr/bin/njs',
+       ''
+      ],
+      env: {
+       HOSTNAME: '483ac20bb33f',
+       HOME: '/root',
+       PKG_RELEASE: '1~buster',
+       TERM: 'xterm',
+       NGINX_VERSION: '1.19.0',
+       PATH: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+       NJS_VERSION: '0.4.1',
+       PWD: '/'
+      }
+     }
     }

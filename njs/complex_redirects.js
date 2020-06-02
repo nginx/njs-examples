@@ -1,7 +1,3 @@
-function version(r) {
-    r.return(200, njs.version);
-}
-
 var fs = require("fs");
 var DB = "/tmp/njs_resolv.db";
 
@@ -106,3 +102,5 @@ function remove(r) {
         r.return(500, "remove: " + e);
     }
 }
+
+export default {add, resolv, map, remove};

@@ -23,6 +23,4 @@ function authenticate(r) {
     r.return(403, JSON.stringify({status: "INVALID"}));
 }
 
-function backend(r) {
-    r.return(200, `Token is ${r.args.token}`);
-}
+export default {process, authenticate}

@@ -1,7 +1,3 @@
-function version(r) {
-    r.return(200, njs.version);
-}
-
 var fs = require('fs');
 var STORAGE = "/tmp/njs_storage"
 
@@ -24,3 +20,5 @@ function read(r) {
 
 	r.return(200, data);
 }
+
+export default {push, flush, read};

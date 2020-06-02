@@ -1,10 +1,10 @@
 // Injecting HTTP header using stream proxy
 
-function inject_header(s) {
-    inject_my_header(s, 'Foo: my_foo');
+function inject_foo_header(s) {
+    inject_header(s, 'Foo: my_foo');
 }
 
-function inject_my_header(s, header) {
+function inject_header(s, header) {
     var req = '';
 
     s.on('upload', function(data, flags) {
@@ -18,3 +18,5 @@ function inject_my_header(s, header) {
         }
     });
 }
+
+export default {inject_foo_header}
