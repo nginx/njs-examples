@@ -7,7 +7,14 @@ Table of content
 ****************
 
 - Intro_
-- Authorization_
+- HTTP_
+
+  - Authorization_
+  - Proxying_
+- Stream_
+
+  - Routing_
+- Misc_
 - `Command line interface`_
 
 Intro
@@ -74,6 +81,9 @@ Checking:
 
   curl http://localhost/version
   0.4.1
+
+HTTP
+====
 
 Authorization
 =============
@@ -263,8 +273,11 @@ Checking:
   curl http://127.0.0.1/secure/r --cookie cookie.txt
   PASSED
 
+Proxying
+========
+
 Subrequests join [join_subrequests]
-================
+-----------------------------------
 Combining the results of several subrequests asynchronously into a single JSON reply.
 
 nginx.conf:
@@ -331,7 +344,7 @@ Checking:
 
 
 Subrequests chaining [subrequests_chaining]
-================
+-------------------------------------------
 Subrequests chaining using JS promises.
 
 nginx.conf:
@@ -417,8 +430,85 @@ Checking:
   at main (native)
 
 
+Stream
+======
+
+Routing
+=======
+
+Choosing upstream in stream based on the underlying protocol [stream/detect_http]
+---------------------------------------------------------------------------------
+
+nginx.conf:
+
+.. code-block:: nginx
+
+  ...
+
+  stream {
+    js_import utils.js;
+    js_import main from example.js;
+
+    js_set $upstream main.upstream_type;
+
+    upstream httpback {
+        server 127.0.0.1:8080;
+    }
+
+    upstream tcpback {
+        server 127.0.0.1:3001;
+    }
+
+    server {
+          listen 80;
+
+          js_preread  main.detect_http;
+
+          proxy_pass $upstream;
+    }
+  }
+
+
+example.js:
+
+.. code-block:: js
+
+    var is_http = 0;
+
+    function detect_http(s) {
+        s.on('upload', function (data, flags) {
+            var n = data.indexOf('\r\n');
+            if (n != -1 && data.substr(0, n - 1).endsWith(" HTTP/1.")) {
+                is_http = 1;
+            }
+
+            if (data.length || flags.last) {
+                s.done();
+            }
+        });
+    }
+
+    function upstream_type(s) {
+        return is_http ? "httpback" : "tcpback";
+    }
+
+    export default {detect_http, upstream_type}
+
+Checking:
+
+.. code-block:: shell
+
+  curl http://localhost/
+  HTTPBACK
+
+  echo 'ABC' | nc 127.0.0.1 80 -q1
+  TCPBACK
+
+Misc
+====
+
 File IO [file_io]
-================
+----------------
 
 nginx.conf:
 
@@ -499,74 +589,6 @@ example.js:
 
   curl http://localhost/read
   200 <empty reply>
-
-Choosing upstream in stream based on the underlying protocol [stream/detect_http]
-========================================
-
-nginx.conf:
-
-.. code-block:: nginx
-
-  ...
-
-  stream {
-    js_import utils.js;
-    js_import main from example.js;
-
-    js_set $upstream main.upstream_type;
-
-    upstream httpback {
-        server 127.0.0.1:8080;
-    }
-
-    upstream tcpback {
-        server 127.0.0.1:3001;
-    }
-
-    server {
-          listen 80;
-
-          js_preread  main.detect_http;
-
-          proxy_pass $upstream;
-    }
-  }
-
-
-example.js:
-
-.. code-block:: js
-
-    var is_http = 0;
-
-    function detect_http(s) {
-        s.on('upload', function (data, flags) {
-            var n = data.indexOf('\r\n');
-            if (n != -1 && data.substr(0, n - 1).endsWith(" HTTP/1.")) {
-                is_http = 1;
-            }
-
-            if (data.length || flags.last) {
-                s.done();
-            }
-        });
-    }
-
-    function upstream_type(s) {
-        return is_http ? "httpback" : "tcpback";
-    }
-
-    export default {detect_http, upstream_type}
-
-Checking:
-
-.. code-block:: shell
-
-  curl http://localhost/
-  HTTPBACK
-
-  echo 'ABC' | nc 127.0.0.1 80 -q1
-  TCPBACK
 
 Command line interface
 ======================
