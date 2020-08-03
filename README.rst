@@ -208,15 +208,15 @@ nginx.conf:
 
 .. code-block:: nginx
 
-  env JWT_GEN_KEY;
+  env SECRET_KEY;
 
   ...
 
   http {
-    js_import utils.js;
     js_import main from example.js;
 
     js_set $new_foo main.create_secure_link;
+    js_set $secret_key key main.secret_key;
 
     server {
           listen 80;
@@ -227,7 +227,7 @@ nginx.conf:
               error_page 403 = @login;
 
               secure_link $cookie_foo;
-              secure_link_md5 "$uri mykey";
+              secure_link_md5 "$uri$secret_key";
 
               if ($secure_link = "") {
                       return 403;
@@ -247,13 +247,17 @@ example.js:
 
 .. code-block:: js
 
-  function create_secure_link(r) {
-    return require('crypto').createHash('md5')
-                            .update(r.uri).update(process.env.JWT_GEN_KEY)
-                            .digest('base64url');
+  function secret_key(r) {
+      return process.env.SECRET_KEY;
   }
 
-  export default {create_secure_link}
+  function create_secure_link(r) {
+      return require('crypto').createHash('md5')
+                              .update(r.uri).update(process.env.SECRET_KEY)
+                              .digest('base64url');
+  }
+
+  export default {secret_key, create_secure_link}
 
 Checking:
 

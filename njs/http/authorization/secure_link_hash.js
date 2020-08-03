@@ -1,7 +1,11 @@
+function secret_key(r) {
+    return process.env.SECRET_KEY;
+}
+
 function create_secure_link(r) {
     return require('crypto').createHash('md5')
-                            .update(r.uri).update(process.env.JWT_GEN_KEY)
+                            .update(r.uri).update(process.env.SECRET_KEY)
                             .digest('base64url');
 }
 
-export default {create_secure_link}
+export default {secret_key, create_secure_link}
