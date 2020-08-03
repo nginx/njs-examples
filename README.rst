@@ -201,7 +201,7 @@ Checking:
 
 
 Secure hash [http/authorization/secure_link_hash]
------------------------------
+-------------------------------------------------
 Protecting ``/secure/`` location from simple bots and web crawlers.
 
 nginx.conf:
@@ -272,6 +272,228 @@ Checking:
 
   curl http://127.0.0.1/secure/r --cookie cookie.txt
   PASSED
+
+Authorizing requests using auth_request [http/authorization/auth_request]
+-------------------------------------------------------------------------
+`auth_request <http://nginx.org/en/docs/http/ngx_http_auth_request_module.html>`_
+is generic nginx modules which implements client authorization based on the result of a subrequest.
+Combination of auth_request and njs allows to implement arbitrary authorization logic.
+
+nginx.conf:
+
+.. code-block:: nginx
+
+    ...
+
+    env SECRET_KEY;
+
+    http {
+          js_import main from example.js;
+
+          upstream backend {
+              server 127.0.0.1:8081;
+          }
+
+          server {
+              listen 80;
+
+              location /secure/ {
+                  auth_request /validate;
+
+                  proxy_pass http://backend;
+              }
+
+              location /validate {
+                  internal;
+                  js_content main.authorize;
+              }
+          }
+
+          server {
+              listen 127.0.0.1:8081;
+              return 200 "BACKEND:$uri\n";
+          }
+    }
+
+example.js:
+
+.. code-block:: js
+
+    function authorize(r) {
+        var signature = r.headersIn.Signature;
+
+        if (!signature) {
+            r.error("No signature");
+            r.return(401);
+            return;
+        }
+
+        if (r.method != 'GET') {
+            r.error(`Unsupported method: ${r.method}`);
+            r.return(401);
+            return;
+        }
+
+        var args = r.variables.args;
+
+        var h = require('crypto').createHmac('sha1', process.env.SECRET_KEY);
+
+        h.update(r.uri).update(args ? args : "");
+
+        var req_sig = h.digest("base64");
+
+        if (req_sig != signature) {
+            r.error(`Invalid signature: ${req_sig}\n`);
+            r.return(401);
+            return;
+        }
+
+        r.return(200);
+    }
+
+    export default {authorize}
+
+Checking:
+
+.. code-block:: shell
+
+  docker run --rm --name njs_example -e SECRET_KEY="foo" ...
+
+  curl http://localhost/secure/B  
+  <html>
+  <head><title>401 Authorization Required</title></head>
+  <body>
+  <center><h1>401 Authorization Required</h1></center>
+  <hr><center>nginx/1.19.0</center>
+  </body>
+  </html>
+
+  curl http://localhost/secure/B  -H Signature:fk9WRmw7Rl+NwVAA759+H2Uq
+  <html>
+  <head><title>401 Authorization Required</title></head>
+  <body>
+  <center><h1>401 Authorization Required</h1></center>
+  <hr><center>nginx/1.19.0</center>
+  </body>
+  </html>
+
+  curl http://localhost/secure/B  -H Signature:fk9WRmw7Rl+NwVAA759+H2UqxNs=
+  BACKEND:/secure/B
+
+  docker logs njs_example
+  172.17.0.1 - - [03/Aug/2020:18:22:30 +0000] "GET /secure/B HTTP/1.1" 401 179 "-" "curl/7.58.0"
+  2020/08/03 18:22:47 [error] 28#28: *3 js: No signature
+  172.17.0.1 - - [03/Aug/2020:18:22:47 +0000] "GET /secure/B HTTP/1.1" 401 179 "-" "curl/7.58.0"
+  2020/08/03 18:22:54 [error] 28#28: *4 js: Invalid signature: fk9WRmw7Rl+NwVAA759+H2UqxNs=
+
+  172.17.0.1 - - [03/Aug/2020:18:22:54 +0000] "GET /secure/B HTTP/1.1" 401 179 "-" "curl/7.58.0"
+  127.0.0.1 - - [03/Aug/2020:18:23:00 +0000] "GET /secure/B HTTP/1.0" 200 18 "-" "curl/7.58.0"
+  172.17.0.1 - - [03/Aug/2020:18:23:00 +0000] "GET /secure/B HTTP/1.1" 200 18 "-" "curl/7.58.0"
+
+Authorizing requests based on request body content [http/authorization/request_body]
+-----------------------------------------------------------------------------------
+`Authorizing requests using auth_request [http/authorization/auth_request]`_ cannot inspect client request body.
+Sometimes inspecting client request body is required, for example to validate POST arguments (application/x-www-form-urlencoded).
+
+nginx.conf:
+
+.. code-block:: nginx
+
+    ...
+
+    env SECRET_KEY;
+
+    http {
+          js_import main from example.js;
+
+          upstream backend {
+              server 127.0.0.1:8081;
+          }
+
+          server {
+              listen 80;
+
+              location /secure/ {
+                  js_content main.authorize;
+              }
+
+              location @app-backend {
+                  proxy_pass http://backend;
+              }
+          }
+
+          server {
+              listen 127.0.0.1:8081;
+              return 200 "BACKEND:$uri\n";
+          }
+
+example.js:
+
+.. code-block:: js
+
+    function authorize(r) {
+        var signature = r.headersIn.Signature;
+
+        if (!signature) {
+            r.return(401, "No signature\n");
+            return;
+        }
+
+        var h = require('crypto').createHmac('sha1', process.env.SECRET_KEY);
+
+        h.update(r.uri);
+
+        switch (r.method) {
+        case 'GET':
+            var args = r.variables.args;
+            h.update(args ? args : "");
+            break;
+
+        case 'POST':
+            var body  = r.requestBody;
+            if (r.headersIn['Content-Type'] != 'application/x-www-form-urlencoded'
+                || !body.length)
+            {
+                r.return(401, "Unsupported method\n");
+            }
+
+            h.update(body);
+            break;
+
+        default:
+            r.return(401, "Unsupported method\n");
+            return;
+        }
+
+        var req_sig = h.digest("base64");
+
+        if (req_sig != signature) {
+            r.return(401, `Invalid signature: ${req_sig}\n`);
+            return;
+        }
+
+        r.internalRedirect('@app-backend');
+    }
+
+    export default {authorize}
+
+Checking:
+
+.. code-block:: shell
+
+  docker run --rm --name njs_example -e SECRET_KEY="foo" ...
+
+  curl http://localhost/secure/B 
+  No signature
+
+  curl http://localhost/secure/B?a=1 -H Signature:A
+  Invalid signature: YC5iL6aKDnv7XOjknEeDL+P58iw=
+
+  curl http://localhost/secure/B?a=1 -H Signature:YC5iL6aKDnv7XOjknEeDL+P58iw=
+  BACKEND:/secure/B
+
+  curl http://localhost/secure/B -d "a=1" -X POST -H Signature:YC5iL6aKDnv7XOjknEeDL+P58iw=
+  BACKEND:/secure/B
 
 Proxying
 ========
