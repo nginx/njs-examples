@@ -28,14 +28,14 @@ Running inside Docker:
 
   git clone https://github.com/xeioex/njs-examples
   cd njs-examples
-  EXAMPLE='hello'
+  EXAMPLE='http/hello'
   docker run --rm --name njs_example  -v $(pwd)/conf/$EXAMPLE.conf:/etc/nginx/nginx.conf:ro  -v $(pwd)/njs/$EXAMPLE.js:/etc/nginx/example.js:ro -v $(pwd)/njs/utils.js:/etc/nginx/utils.js:ro -p 80:80 -p 8090:8090 -d nginx
 
   # Stopping.
   docker stop njs_example
 
-Hello world [hello]
-------------------
+Hello world [http/hello]
+-----------------------
 
 nginx.conf:
 
@@ -88,8 +88,8 @@ HTTP
 Authorization
 =============
 
-Getting arbitrary field from JWT as a nginx variable [jwt]
----------------------------------------------------------
+Getting arbitrary field from JWT as a nginx variable [http/authorization/jwt]
+----------------------------------------------------------------------------
 
 nginx.conf:
 
@@ -133,8 +133,8 @@ Checking:
   curl 'http://localhost/jwt' -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImV4cCI6MTU4NDcyMzA4NX0.eyJpc3MiOiJuZ2lueCIsInN1YiI6ImFsaWNlIiwiZm9vIjoxMjMsImJhciI6InFxIiwienl4IjpmYWxzZX0.Kftl23Rvv9dIso1RuZ8uHaJ83BkKmMtTwch09rJtwgk"
   alice
 
-Generating JWT token [gen_hs_jwt]
---------------------------------
+Generating JWT token [http/authorization/gen_hs_jwt]
+---------------------------------------------------
 
 nginx.conf:
 
@@ -200,7 +200,7 @@ Checking:
   eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImV4cCI6MTU4NDcyMjk2MH0.eyJpc3MiOiJuZ2lueCIsInN1YiI6ImFsaWNlIiwiZm9vIjoxMjMsImJhciI6InFxIiwienl4IjpmYWxzZX0.GxfKkJSWI4oq5sGBg4aKRAcFeKmiA6v4TR43HbcP2X8
 
 
-Secure hash [secure_link_hash]
+Secure hash [http/authorization/secure_link_hash]
 -----------------------------
 Protecting ``/secure/`` location from simple bots and web crawlers.
 
@@ -276,8 +276,8 @@ Checking:
 Proxying
 ========
 
-Subrequests join [join_subrequests]
------------------------------------
+Subrequests join [http/join_subrequests]
+----------------------------------------
 Combining the results of several subrequests asynchronously into a single JSON reply.
 
 nginx.conf:
@@ -343,7 +343,7 @@ Checking:
   [{"uri":"/foo","code":200,"body":"FOO"},{"uri":"/bar","code":200,"body":"BAR"}]
 
 
-Subrequests chaining [subrequests_chaining]
+Subrequests chaining [http/subrequests_chaining]
 -------------------------------------------
 Subrequests chaining using JS promises.
 
@@ -507,8 +507,8 @@ Checking:
 Misc
 ====
 
-File IO [file_io]
-----------------
+File IO [misc/file_io]
+----------------------
 
 nginx.conf:
 
