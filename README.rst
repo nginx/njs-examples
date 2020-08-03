@@ -6,11 +6,11 @@ NGINX JavaScript examples
 Table of content
 ****************
 
-- :ref:`Intro <intro>`
-- :ref:`Authorization <authorization>`
-- :ref:`Command line interface <cli>`
+- Intro_
+- `Authorization <https://github.com/xeioex/njs-examples/blob/master/authorization.rst>`
+- CLI_
 
-.. _intro:
+.. _Intro:
 
 Intro
 =====
@@ -382,7 +382,7 @@ Checking:
   echo 'ABC' | nc 127.0.0.1 80 -q1
   TCPBACK
 
-.. _cli:
+.. _CLI:
 
 Command line
 ============
