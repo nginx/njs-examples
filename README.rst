@@ -363,7 +363,7 @@ Checking:
 
   docker run --rm --name njs_example -e SECRET_KEY="foo" ...
 
-  curl http://localhost/secure/B  
+  curl http://localhost/secure/B
   <html>
   <head><title>401 Authorization Required</title></head>
   <body>
@@ -487,7 +487,7 @@ Checking:
 
   docker run --rm --name njs_example -e SECRET_KEY="foo" ...
 
-  curl http://localhost/secure/B 
+  curl http://localhost/secure/B
   No signature
 
   curl http://localhost/secure/B?a=1 -H Signature:A
