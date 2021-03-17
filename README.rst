@@ -11,6 +11,7 @@ Table of content
 
   - Authorization_
   - Proxying_
+  - `Modifying response header`_
 - Stream_
 
   - Routing_
@@ -20,7 +21,7 @@ Table of content
 Intro
 =====
 
-Note: the examples below work with njs >= `0.4.0 <http://nginx.org/en/docs/njs/changes.html#njs0.4.0>`_, see `this version <https://github.com/xeioex/njs-examples/tree/b1c992c742b5d41dea2e087ebea98e098543a341>`_ for older releases.
+Note: the examples below work with njs >= `0.5.2 <http://nginx.org/en/docs/njs/changes.html#njs0.5.2>`_.
 
 Running inside Docker:
 
@@ -654,6 +655,67 @@ Checking:
   at native (native)
   at main (native)
 
+Modifying response header
+=========================
+
+Modifying or deleting cookies sent by the upstream server [http/response/modify_set_cookie]
+-------------------------------------------------------------------------------------------
+
+nginx.conf:
+
+.. code-block:: nginx
+
+  ...
+
+  http {
+    js_import main from example.js;
+
+    server {
+          listen 80;
+
+          location /modify_cookies {
+              js_header_filter main.cookies_filter;
+              proxy_pass http://localhost:8080;
+          }
+    }
+
+    server {
+          listen 8080;
+
+          location /modify_cookies {
+              add_header Set-Cookie "XXXXXX";
+              add_header Set-Cookie "BB";
+              add_header Set-Cookie "YYYYYYY";
+              return 200;
+          }
+    }
+  }
+
+example.js:
+
+.. code-block:: js
+
+    function cookies_filter(r) {
+        var cookies = r.headersOut['Set-Cookie'];
+        r.headersOut['Set-Cookie'] = cookies.filter(v=>v.length > Number(r.args.len));
+    }
+
+    export default {cookies_filter};
+
+Checking:
+
+.. code-block:: shell
+
+  curl http://localhost:8000/modify_cookies?len=1 -v
+    ...
+  < Set-Cookie: XXXXXX
+  < Set-Cookie: BB
+  < Set-Cookie: YYYYYYY
+
+  curl http://localhost:8000/modify_cookies?len=3 -v
+    ...
+  < Set-Cookie: XXXXXX
+  < Set-Cookie: YYYYYYY
 
 Stream
 ======
