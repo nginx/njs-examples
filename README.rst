@@ -7,15 +7,35 @@ Table of content
 ****************
 
 - Intro_
+
+  - `Hello world [http/hello]`_
 - HTTP_
 
   - Authorization_
+
+   - `Getting arbitrary field from JWT as a nginx variable [http/authorization/jwt]`_
+   - `Generating JWT token [http/authorization/gen_hs_jwt]`_
+   - `Secure hash [http/authorization/secure_link_hash]`_
+   - `Authorizing requests using auth_request [http/authorization/auth_request]`_
+   - `Authorizing requests based on request body content [http/authorization/request_body]`_
+
   - Proxying_
+
+   - `Subrequests join [http/join_subrequests]`_
+   - `Subrequests chaining [http/subrequests_chaining]`_
+
   - `Modifying response header`_
+
+   - `Modifying or deleting cookies sent by the upstream server [http/response/modify_set_cookie]`_
+
 - Stream_
 
   - Routing_
+
+   - `Choosing upstream in stream based on the underlying protocol [stream/detect_http]`_
 - Misc_
+
+  - `File IO [misc/file_io]`_
 - `Command line interface`_
 
 Intro
@@ -36,7 +56,7 @@ Running inside Docker:
   docker stop njs_example
 
 Hello world [http/hello]
------------------------
+------------------------
 
 nginx.conf:
 
@@ -90,7 +110,7 @@ Authorization
 =============
 
 Getting arbitrary field from JWT as a nginx variable [http/authorization/jwt]
-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 
 nginx.conf:
 
@@ -135,7 +155,7 @@ Checking:
   alice
 
 Generating JWT token [http/authorization/gen_hs_jwt]
----------------------------------------------------
+----------------------------------------------------
 
 nginx.conf:
 
@@ -395,7 +415,7 @@ Checking:
   172.17.0.1 - - [03/Aug/2020:18:23:00 +0000] "GET /secure/B HTTP/1.1" 200 18 "-" "curl/7.58.0"
 
 Authorizing requests based on request body content [http/authorization/request_body]
------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
 `Authorizing requests using auth_request [http/authorization/auth_request]`_ cannot inspect client request body.
 Sometimes inspecting client request body is required, for example to validate POST arguments (application/x-www-form-urlencoded).
 
@@ -570,7 +590,7 @@ Checking:
 
 
 Subrequests chaining [http/subrequests_chaining]
--------------------------------------------
+------------------------------------------------
 Subrequests chaining using JS promises.
 
 nginx.conf:
