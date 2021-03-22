@@ -15,7 +15,7 @@ Table of content
 
    - `Getting arbitrary field from JWT as a nginx variable [http/authorization/jwt]`_
    - `Generating JWT token [http/authorization/gen_hs_jwt]`_
-   - `Secure hash [http/authorization/secure_link_hash]`_
+   - `Secure link [http/authorization/secure_link_hash]`_
    - `Authorizing requests using auth_request [http/authorization/auth_request]`_
    - `Authorizing requests based on request body content [http/authorization/request_body]`_
 
