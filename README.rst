@@ -320,33 +320,33 @@ nginx.conf:
     env SECRET_KEY;
 
     http {
-          js_path "/etc/nginx/njs/";
+      js_path "/etc/nginx/njs/";
 
-          js_import main from http/authorization/auth_request.js;
+      js_import main from http/authorization/auth_request.js;
 
-          upstream backend {
-              server 127.0.0.1:8081;
+      upstream backend {
+          server 127.0.0.1:8081;
+      }
+
+      server {
+          listen 80;
+
+          location /secure/ {
+              auth_request /validate;
+
+              proxy_pass http://backend;
           }
 
-          server {
-              listen 80;
-
-              location /secure/ {
-                  auth_request /validate;
-
-                  proxy_pass http://backend;
-              }
-
-              location /validate {
-                  internal;
-                  js_content main.authorize;
-              }
+          location /validate {
+              internal;
+              js_content main.authorize;
           }
+      }
 
-          server {
-              listen 127.0.0.1:8081;
-              return 200 "BACKEND:$uri\n";
-          }
+      server {
+          listen 127.0.0.1:8081;
+          return 200 "BACKEND:$uri\n";
+      }
     }
 
 example.js:
@@ -438,30 +438,31 @@ nginx.conf:
     env SECRET_KEY;
 
     http {
-          js_path "/etc/nginx/njs/";
+      js_path "/etc/nginx/njs/";
 
-          js_import main from http/authorization/request_body.js;
+      js_import main from http/authorization/request_body.js;
 
-          upstream backend {
-              server 127.0.0.1:8081;
+      upstream backend {
+          server 127.0.0.1:8081;
+      }
+
+      server {
+          listen 80;
+
+          location /secure/ {
+              js_content main.authorize;
           }
 
-          server {
-              listen 80;
-
-              location /secure/ {
-                  js_content main.authorize;
-              }
-
-              location @app-backend {
-                  proxy_pass http://backend;
-              }
+          location @app-backend {
+              proxy_pass http://backend;
           }
+      }
 
-          server {
-              listen 127.0.0.1:8081;
-              return 200 "BACKEND:$uri\n";
-          }
+      server {
+          listen 127.0.0.1:8081;
+          return 200 "BACKEND:$uri\n";
+      }
+    }
 
 example.js:
 
