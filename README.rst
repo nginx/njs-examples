@@ -745,13 +745,13 @@ Checking:
 
 .. code-block:: shell
 
-  curl http://localhost:8000/modify_cookies?len=1 -v
+  curl http://localhost/modify_cookies?len=1 -v
     ...
   < Set-Cookie: XXXXXX
   < Set-Cookie: BB
   < Set-Cookie: YYYYYYY
 
-  curl http://localhost:8000/modify_cookies?len=3 -v
+  curl http://localhost/modify_cookies?len=3 -v
     ...
   < Set-Cookie: XXXXXX
   < Set-Cookie: YYYYYYY
