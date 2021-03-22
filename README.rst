@@ -50,7 +50,7 @@ Running inside Docker:
   git clone https://github.com/xeioex/njs-examples
   cd njs-examples
   EXAMPLE='http/hello'
-  docker run --rm --name njs_example  -v $(pwd)/conf/$EXAMPLE.conf:/etc/nginx/nginx.conf:ro  -v $(pwd)/njs/$EXAMPLE.js:/etc/nginx/example.js:ro -v $(pwd)/njs/utils.js:/etc/nginx/utils.js:ro -p 80:80 -p 8090:8090 -d nginx
+  docker run --rm --name njs_example  -v $(pwd)/conf/$EXAMPLE.conf:/etc/nginx/nginx.conf:ro -v $(pwd)/njs/:/etc/nginx/njs/:ro -p 80:80 -p 8090:8090 -d nginx
 
   # Stopping.
   docker stop njs_example
@@ -67,8 +67,10 @@ nginx.conf:
   events {}
 
   http {
+    js_path "/etc/nginx/njs/";
+
     js_import utils.js;
-    js_import main from example.js;
+    js_import main from http/hello.js;
 
     server {
       listen 80;
@@ -117,8 +119,10 @@ nginx.conf:
 .. code-block:: nginx
 
   http {
+    js_path "/etc/nginx/njs/";
+
     js_import utils.js;
-    js_import main from example.js;
+    js_import main from http/authorization/jwt.js;
 
     js_set $jwt_payload_sub main.jwt_payload_sub;
 
@@ -166,8 +170,10 @@ nginx.conf:
   ...
 
   http {
+    js_path "/etc/nginx/njs/";
+
     js_import utils.js;
-    js_import main from example.js;
+    js_import main from http/authorization/gen_hs_jwt.js;
 
     js_set $jwt main.jwt;
 
@@ -233,7 +239,9 @@ nginx.conf:
   ...
 
   http {
-    js_import main from example.js;
+    js_path "/etc/nginx/njs/";
+
+    js_import main from http/authorization/secure_link_hash.js;
 
     js_set $new_foo main.create_secure_link;
     js_set $secret_key key main.secret_key;
@@ -312,7 +320,9 @@ nginx.conf:
     env SECRET_KEY;
 
     http {
-          js_import main from example.js;
+          js_path "/etc/nginx/njs/";
+
+          js_import main from http/authorization/auth_request.js;
 
           upstream backend {
               server 127.0.0.1:8081;
@@ -428,7 +438,9 @@ nginx.conf:
     env SECRET_KEY;
 
     http {
-          js_import main from example.js;
+          js_path "/etc/nginx/njs/";
+
+          js_import main from http/authorization/request_body.js;
 
           upstream backend {
               server 127.0.0.1:8081;
@@ -533,8 +545,10 @@ nginx.conf:
   ...
 
   http {
+    js_path "/etc/nginx/njs/";
+
     js_import utils.js;
-    js_import main from example.js;
+    js_import main from http/join_subrequests.js;
 
     server {
           listen 80;
@@ -600,8 +614,10 @@ nginx.conf:
   ...
 
   http {
+    js_path "/etc/nginx/njs/";
+
     js_import utils.js;
-    js_import main from example.js;
+    js_import main from http/subrequests_chaining.js;
 
     server {
           listen 80;
@@ -688,7 +704,9 @@ nginx.conf:
   ...
 
   http {
-    js_import main from example.js;
+    js_path "/etc/nginx/njs/";
+
+    js_import main from http/response/modify_set_cookie.js;
 
     server {
           listen 80;
@@ -753,8 +771,10 @@ nginx.conf:
   ...
 
   stream {
+    js_path "/etc/nginx/njs/";
+
     js_import utils.js;
-    js_import main from example.js;
+    js_import main from stream/detect_http.js;
 
     js_set $upstream main.upstream_type;
 
@@ -822,8 +842,10 @@ nginx.conf:
 .. code-block:: nginx
 
     http {
+      js_path "/etc/nginx/njs/";
+
       js_import utils.js;
-      js_import main from example.js;
+      js_import main from misc/file_io.js;
 
       server {
             listen 80;
