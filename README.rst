@@ -226,7 +226,7 @@ Checking:
   eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImV4cCI6MTU4NDcyMjk2MH0.eyJpc3MiOiJuZ2lueCIsInN1YiI6ImFsaWNlIiwiZm9vIjoxMjMsImJhciI6InFxIiwienl4IjpmYWxzZX0.GxfKkJSWI4oq5sGBg4aKRAcFeKmiA6v4TR43HbcP2X8
 
 
-Secure hash [http/authorization/secure_link_hash]
+Secure link [http/authorization/secure_link_hash]
 -------------------------------------------------
 Protecting ``/secure/`` location from simple bots and web crawlers.
 
@@ -291,7 +291,7 @@ Checking:
 
 .. code-block:: shell
 
-  docker run --rm --name njs_example -e JWT_GEN_KEY=" mykey" ...
+  docker run --rm --name njs_example -e SECRET_KEY=" mykey" ...
 
   curl http://127.0.0.1/secure/r
   302
