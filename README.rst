@@ -829,8 +829,13 @@ Checking:
   curl http://localhost/
   HTTPBACK
 
-  echo 'ABC' | nc 127.0.0.1 80 -q1
+  telnet 127.0.0.1 80
+  Trying 127.0.0.1...
+  Connected to 127.0.0.1.
+  Escape character is '^]'.
+  TEST
   TCPBACK
+  Connection closed by foreign host.
 
 Misc
 ====
