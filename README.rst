@@ -28,9 +28,10 @@ Table of content
    - `Subrequests join [http/join_subrequests]`_
    - `Subrequests chaining [http/subrequests_chaining]`_
 
-  - `Modifying response header`_
+  - `Modifying response`_
 
    - `Modifying or deleting cookies sent by the upstream server [http/response/modify_set_cookie]`_
+   - `Converting response body characters to lower case [http/response/to_lower_case]`_
 
 - Stream_
 
@@ -767,7 +768,7 @@ Checking:
   at native (native)
   at main (native)
 
-Modifying response header
+Modifying response
 =========================
 
 Modifying or deleting cookies sent by the upstream server [http/response/modify_set_cookie]
@@ -830,6 +831,55 @@ Checking:
     ...
   < Set-Cookie: XXXXXX
   < Set-Cookie: YYYYYYY
+
+Converting response body characters to lower case [http/response/to_lower_case]
+-------------------------------------------------------------------------------
+
+nginx.conf:
+
+.. code-block:: nginx
+
+  ...
+
+  http {
+    js_path "/etc/nginx/njs/";
+
+    js_import main from http/response/to_lower_case.js;
+
+    server {
+          listen 80;
+
+          location / {
+              js_header_filter main.to_lower_case;
+              proxy_pass http://localhost:8080;
+          }
+    }
+
+    server {
+          listen 8080;
+
+          location / {
+              return 200 'Hello World';
+          }
+    }
+  }
+
+example.js:
+
+.. code-block:: js
+
+    function to_lower_case(r, data, flags) {
+        r.sendBuffer(data.toLowerCase(), flags);
+    }
+
+    export default {to_lower_case};
+
+Checking:
+
+.. code-block:: shell
+
+  curl http://localhost/
+  hello world
 
 Stream
 ======
