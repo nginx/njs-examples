@@ -9,6 +9,7 @@ Table of content
 - Intro_
 
   - `Hello world [http/hello]`_
+
 - HTTP_
 
   - Authorization_
@@ -41,7 +42,9 @@ Table of content
 - Misc_
 
   - `File IO [misc/file_io]`_
+
 - `Command line interface`_
+- `Additional learning materials`_
 
 Intro
 =====
@@ -1093,3 +1096,8 @@ Command line interface
       }
      }
     }
+
+Additional learning materials
+=============================
+
+`soulteary/njs-learning-materials <https://github.com/soulteary/njs-learning-materials>`_
