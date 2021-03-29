@@ -121,10 +121,10 @@ HTTP
 ====
 
 Authorization
-=============
+-------------
 
 Getting arbitrary field from JWT as a nginx variable [http/authorization/jwt]
------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 nginx.conf:
 
@@ -171,7 +171,7 @@ Checking:
   alice
 
 Generating JWT token [http/authorization/gen_hs_jwt]
-----------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 nginx.conf:
 
@@ -239,7 +239,7 @@ Checking:
 
 
 Secure link [http/authorization/secure_link_hash]
--------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Protecting ``/secure/`` location from simple bots and web crawlers.
 
 nginx.conf:
@@ -318,7 +318,7 @@ Checking:
   PASSED
 
 Authorizing requests using auth_request [http/authorization/auth_request]
--------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. _`auth request`:
 
@@ -440,7 +440,7 @@ Checking:
   172.17.0.1 - - [03/Aug/2020:18:23:00 +0000] "GET /secure/B HTTP/1.1" 200 18 "-" "curl/7.58.0"
 
 Authorizing requests based on request body content [http/authorization/request_body]
-------------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 `Authorizing requests using auth_request [http/authorization/auth_request]`_ cannot inspect client request body.
 Sometimes inspecting client request body is required, for example to validate POST arguments (application/x-www-form-urlencoded).
 
@@ -548,10 +548,10 @@ Checking:
   BACKEND:/secure/B
 
 Certificates
-============
+------------
 
 Reading subject alternative from client certificate [http/certs/subject_alternative]
-------------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Accessing arbitrary fields in client certificates.
 
 nginx.conf:
@@ -619,10 +619,10 @@ Checking:
   ["7f000001","00000000000000000000000000000001","example.com","www2.example.com"]
 
 Proxying
-========
+--------
 
 Subrequests join [http/join_subrequests]
-----------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Combining the results of several subrequests asynchronously into a single JSON reply.
 
 nginx.conf:
@@ -691,7 +691,7 @@ Checking:
 
 
 Subrequests chaining [http/subrequests_chaining]
-------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Subrequests chaining using JS promises.
 
 nginx.conf:
@@ -779,10 +779,10 @@ Checking:
   at main (native)
 
 Modifying response
-=========================
+------------------
 
 Modifying or deleting cookies sent by the upstream server [http/response/modify_set_cookie]
--------------------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 nginx.conf:
 
@@ -843,7 +843,7 @@ Checking:
   < Set-Cookie: YYYYYYY
 
 Converting response body characters to lower case [http/response/to_lower_case]
--------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 nginx.conf:
 
@@ -895,10 +895,10 @@ Stream
 ======
 
 Authorization
-=============
+-------------
 
 Authorizing connections using ngx.fetch() as auth_request [stream/auth_request]
--------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The example illustrates the usage of ngx.fetch() as an `auth request`_ analog in
 stream with a very simple TCP-based protocol: a connection starts with a
 magic prefix "MAGiK" followed by a secret 2 bytes. The preread_verify handler
@@ -995,10 +995,10 @@ Checking:
   Connection closed by foreign host.
 
 Routing
-=======
+-------
 
 Choosing upstream in stream based on the underlying protocol [stream/detect_http]
----------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 nginx.conf:
 
