@@ -36,6 +36,10 @@ Table of content
 
 - Stream_
 
+  - Authorization_
+
+   - `Authorizing connections using ngx.fetch() as auth_request [stream/auth_request]`_
+
   - Routing_
 
    - `Choosing upstream in stream based on the underlying protocol [stream/detect_http]`_
@@ -315,6 +319,9 @@ Checking:
 
 Authorizing requests using auth_request [http/authorization/auth_request]
 -------------------------------------------------------------------------
+
+.. _`auth request`:
+
 `auth_request <http://nginx.org/en/docs/http/ngx_http_auth_request_module.html>`_
 is generic nginx modules which implements client authorization based on the result of a subrequest.
 Combination of auth_request and njs allows to implement arbitrary authorization logic.
@@ -886,6 +893,106 @@ Checking:
 
 Stream
 ======
+
+Authorization
+=============
+
+Authorizing connections using ngx.fetch() as auth_request [stream/auth_request]
+-------------------------------------------------------------------------------
+The example illustrates the usage of ngx.fetch() as an `auth request`_ analog in
+stream with a very simple TCP-based protocol: a connection starts with a
+magic prefix "MAGiK" followed by a secret 2 bytes. The preread_verify handler
+reads the first part of a connection and sends the secret bytes for verification
+to a HTTP endpoint. Later it decides based upon the endpoint reply whether
+forward the connection to an upstream or reject the connection.
+
+nginx.conf:
+
+.. code-block:: nginx
+
+  stream {
+        js_path "/etc/nginx/njs/";
+
+        js_import main from stream/auth_request.js;
+
+        server {
+              listen 80;
+
+              js_preread  main.preread_verify;
+
+              proxy_pass 127.0.0.1:8081;
+        }
+
+        server {
+              listen 8081;
+
+              return BACKEND\n;
+        }
+  }
+
+  http {
+        js_path "/etc/nginx/njs/";
+
+        js_import main from stream/auth_request.js;
+
+        server {
+              listen 8080;
+
+              server_name  aaa;
+
+              location /validate {
+                  js_content main.validate;
+              }
+        }
+  }
+
+example.js:
+
+.. code-block:: js
+
+  function preread_verify(s) {
+      var collect = '';
+
+      s.on('upload', function (data, flags) {
+          collect += data;
+
+          if (collect.length >= 5 && collect.startsWith('MAGiK')) {
+              s.off('upload');
+              ngx.fetch('http://127.0.0.1:8080/validate',
+                        {body: collect.slice(5,7), headers: {Host:'aaa'}})
+              .then(reply => (reply.status == 200) ? s.done(): s.deny())
+
+          } else if (collect.length) {
+              s.deny();
+          }
+      });
+  }
+
+  function validate(r) {
+          r.return((r.requestText == 'QZ') ? 200 : 403);
+  }
+
+  export default {validate, preread_verify};
+
+Checking:
+
+.. code-block:: shell
+
+  telnet 127.0.0.1 80
+  ...
+  Hi
+  Connection closed by foreign host.
+
+  telnet 127.0.0.1 80
+  ...
+  MAGiKQZ
+  BACKEND
+  Connection closed by foreign host.
+
+  telnet 127.0.0.1 80
+  ...
+  MAGiKQQ
+  Connection closed by foreign host.
 
 Routing
 =======
