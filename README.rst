@@ -8,9 +8,12 @@ NGINX JavaScript examples
 Intro
 =====
 
-Note: the examples below work with njs >= `0.5.2 <http://nginx.org/en/docs/njs/changes.html#njs0.5.2>`_.
+This repo contains complete examples for various use cases where `njs <http://nginx.org/en/docs/njs/>`_ is useful. The document as well as `njs documentation <http://nginx.org/en/docs/njs/>`_ expects some familiarity with and understanding of nginx. Beginners should refer to the official `admin guide <https://docs.nginx.com/nginx/admin-guide/>`_.
 
-Running inside Docker:
+Note: the examples below work with njs >= `0.5.2 <http://nginx.org/en/docs/njs/changes.html#njs0.5.2>`_. To see the current version run the following command: ``docker run -i -t nginx:latest /usr/bin/njs -V``.
+
+Running inside Docker
+---------------------
 
 .. code-block:: shell
 
@@ -22,8 +25,31 @@ Running inside Docker:
   # Stopping.
   docker stop njs_example
 
-Hello world [http/hello]
-------------------------
+Status
+------
+While njs is in active development it is production ready. Its reliability has been proven by extensive test coverage as well as a good track record with our customers.
+
+nginx compatibility
+-------------------
+As njs is a `native nginx module <http://nginx.org/en/docs/dev/development_guide.html#Modules>`_ its compatibility with nginx is high. While it is developed as a separate project, it is routinely tested with latest nginx versions on various platforms and architectures.
+
+Presentation at nginx.conf 2018
+-------------------------------
+https://youtu.be/Jc_L6UffFOs
+
+Installation
+------------
+njs is available as a part of official nginx docker image as well as an officially supported `packet <http://nginx.org/en/linux_packages.html>`_ for major linux distributions.
+
+Repository
+----------
+Please ask questions, report issues, and send patches via official `Github mirror <https://github.com/nginx/njs>`_.
+
+HTTP
+====
+
+Hello world example [http/hello]
+--------------------------------
 
 nginx.conf:
 
@@ -71,9 +97,6 @@ Checking:
 
   curl http://localhost/version
   0.4.1
-
-HTTP
-====
 
 Authorization
 -------------
