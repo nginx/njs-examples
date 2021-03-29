@@ -860,7 +860,7 @@ nginx.conf:
           listen 80;
 
           location / {
-              js_header_filter main.to_lower_case;
+              js_body_filter main.to_lower_case;
               proxy_pass http://localhost:8080;
           }
     }
