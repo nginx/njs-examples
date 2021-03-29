@@ -2,53 +2,8 @@
 NGINX JavaScript examples
 =========================
 
-****************
-Table of content
-****************
-
-- Intro_
-
-  - `Hello world [http/hello]`_
-
-- HTTP_
-
-  - Authorization_
-
-   - `Getting arbitrary field from JWT as a nginx variable [http/authorization/jwt]`_
-   - `Generating JWT token [http/authorization/gen_hs_jwt]`_
-   - `Secure link [http/authorization/secure_link_hash]`_
-   - `Authorizing requests using auth_request [http/authorization/auth_request]`_
-   - `Authorizing requests based on request body content [http/authorization/request_body]`_
-
-  - Certificates_
-
-   - `Reading subject alternative from client certificate [http/certs/subject_alternative]`_
-
-  - Proxying_
-
-   - `Subrequests join [http/join_subrequests]`_
-   - `Subrequests chaining [http/subrequests_chaining]`_
-
-  - `Modifying response`_
-
-   - `Modifying or deleting cookies sent by the upstream server [http/response/modify_set_cookie]`_
-   - `Converting response body characters to lower case [http/response/to_lower_case]`_
-
-- Stream_
-
-  - Authorization_
-
-   - `Authorizing connections using ngx.fetch() as auth_request [stream/auth_request]`_
-
-  - Routing_
-
-   - `Choosing upstream in stream based on the underlying protocol [stream/detect_http]`_
-- Misc_
-
-  - `File IO [misc/file_io]`_
-
-- `Command line interface`_
-- `Additional learning materials`_
+.. contents::
+   :depth: 3
 
 Intro
 =====
