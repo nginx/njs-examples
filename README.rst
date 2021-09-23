@@ -107,7 +107,7 @@ right away. Fortunately there are ways to overcome this limitation using other
 nginx modules.
 
 Using auth_request [http/async_var/auth_request]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In simple cases `auth_request <http://nginx.org/en/docs/http/ngx_http_auth_request_module.html>`_
 is enough and njs is not required.
@@ -172,6 +172,7 @@ nginx.conf:
 example.js:
 
 .. code-block:: js
+
     import qs from "querystring";
 
     function choose_upstream(r) {
