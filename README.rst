@@ -106,6 +106,9 @@ invoked in a synchronous context by nginx and is expected to return its result
 right away. Fortunately there are ways to overcome this limitation using other
 nginx modules.
 
+The examples in this section is provided in order from simple to more advanced.
+The simplest method are preferred because generally they are more efficient.
+
 Using auth_request [http/async_var/auth_request]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -205,6 +208,109 @@ Checking:
 
     curl http://localhost/secure/abcde?token=B
     BACKEND B:/secure/abcde
+
+Using auth_request and js_header_filter [http/async_var/js_header_filter]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`js_header_filter <http://nginx.org/en/docs/http/ngx_http_js_module.html#js_header_filter>`_
+can be used to modify the service response and set an appropriate response header of
+an auth_request subrequest. This case is applicable when a service returns a value which
+cannot be used directly.
+
+nginx.conf:
+
+.. code-block:: nginx
+
+    ...
+
+    http {
+      js_path "/etc/nginx/njs/";
+
+      js_import main from http/async_var/js_header_filter.js;
+
+      server {
+          listen 80;
+
+          location /secure/ {
+              auth_request /fetch_upstream;
+              auth_request_set $backend $sent_http_x_backend;
+
+              proxy_pass http://$backend;
+          }
+
+          location /fetch_upstream {
+              internal;
+
+              proxy_pass http://127.0.0.1:8079;
+              proxy_pass_request_body off;
+              proxy_set_header Content-Length "";
+              proxy_set_header X-Original-URI $request_uri;
+
+              js_header_filter main.set_upstream;
+          }
+      }
+
+      server {
+          listen 127.0.0.1:8079;
+
+          location / {
+            js_content main.choose_upstream;
+          }
+      }
+
+      server {
+          listen 127.0.0.1:8081;
+          return 200 "BACKEND A:$uri\n";
+      }
+
+      server {
+          listen 127.0.0.1:8082;
+          return 200 "BACKEND B:$uri\n";
+      }
+    }
+
+example.js:
+
+.. code-block:: js
+
+    import qs from "querystring";
+
+    function choose_upstream(r) {
+        let backend;
+        let args = qs.parse(r.headersIn['X-Original-URI'].split('?')[1]);
+
+        switch (args.token) {
+        case 'A':
+            backend = 'B1';
+            break;
+        case 'B':
+            backend = 'B2';
+            break;
+        default:
+            r.return(404);
+        }
+
+        r.headersOut['X-backend'] = backend;
+        r.return(200);
+    }
+
+    function set_upstream(r) {
+        let backend;
+        switch (r.headersOut['X-backend']) {
+        case 'B1':
+            backend = '127.0.0.1:8081';
+            break;
+        case 'B2':
+            backend = '127.0.0.1:8082';
+            break;
+        }
+
+        if (backend) {
+            r.headersOut['X-backend'] = backend;
+        }
+    }
+
+    export default {choose_upstream, set_upstream}
+
 
 Authorization
 -------------
