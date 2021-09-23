@@ -98,6 +98,113 @@ Checking:
   curl http://localhost/version
   0.4.1
 
+Setting nginx var as a result of async operation
+------------------------------------------------
+`js_set <https://nginx.org/en/docs/http/ngx_http_js_module.html#js_set>`_ handler
+does not support asynchronous operation (r.subrequest(), ngx.fetch()) because it is
+invoked in a synchronous context by nginx and is expected to return its result
+right away. Fortunately there are ways to overcome this limitation using other
+nginx modules.
+
+Using auth_request [http/async_var/auth_request]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In simple cases `auth_request <http://nginx.org/en/docs/http/ngx_http_auth_request_module.html>`_
+is enough and njs is not required.
+
+Simple case criteria:
+   - request body is not needed to be forwarded
+   - external service returns the desired value extractable as an nginx variable (for example as a response header)
+
+The following example illustrates this use case using njs ONLY as a fake service.
+$backend variable is populated by auth_request module from a response header of a subrequest.
+
+nginx.conf:
+
+.. code-block:: nginx
+
+    ...
+
+    http {
+      js_path "/etc/nginx/njs/";
+
+      js_import main from http/async_var/auth_request.js;
+
+      server {
+          listen 80;
+
+          location /secure/ {
+              auth_request /fetch_upstream;
+              auth_request_set $backend $upstream_http_x_backend;
+
+              proxy_pass http://$backend;
+          }
+
+          location /fetch_upstream {
+              internal;
+
+              proxy_pass http://127.0.0.1:8079;
+              proxy_pass_request_body off;
+              proxy_set_header Content-Length "";
+              proxy_set_header X-Original-URI $request_uri;
+          }
+      }
+
+      server {
+          listen 127.0.0.1:8079;
+
+          location / {
+            js_content main.choose_upstream;
+          }
+      }
+
+      server {
+          listen 127.0.0.1:8081;
+          return 200 "BACKEND A:$uri\n";
+      }
+
+      server {
+          listen 127.0.0.1:8082;
+          return 200 "BACKEND B:$uri\n";
+      }
+    }
+
+example.js:
+
+.. code-block:: js
+    import qs from "querystring";
+
+    function choose_upstream(r) {
+        let backend;
+        let args = qs.parse(r.headersIn['X-Original-URI'].split('?')[1]);
+
+        switch (args.token) {
+        case 'A':
+            backend = '127.0.0.1:8081';
+            break;
+        case 'B':
+            backend = '127.0.0.1:8082';
+            break;
+        default:
+            r.return(404);
+        }
+
+        r.headersOut['X-backend'] = backend;
+        r.return(200);
+    }
+
+    export default {choose_upstream}
+
+Checking:
+
+.. code-block:: shell
+
+    curl http://localhost/secure/abc?token=A
+    BACKEND A:/secure/abc
+
+    curl http://localhost/secure/abcde?token=B
+    BACKEND B:/secure/abcde
+
 Authorization
 -------------
 
