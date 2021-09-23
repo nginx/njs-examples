@@ -311,6 +311,15 @@ example.js:
 
     export default {choose_upstream, set_upstream}
 
+Checking:
+
+.. code-block:: shell
+
+    curl http://localhost/secure/abc?token=A
+    BACKEND A:/secure/abc
+
+    curl http://localhost/secure/abcde?token=B
+    BACKEND B:/secure/abcde
 
 Authorization
 -------------
