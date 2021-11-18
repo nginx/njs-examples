@@ -37,6 +37,10 @@ Presentation at nginx.conf 2018
 -------------------------------
 https://youtu.be/Jc_L6UffFOs
 
+Extending NGINX with Custom Code
+--------------------------------
+https://youtu.be/0CVhq4AUU7M
+
 Installation
 ------------
 njs is available as a part of official nginx docker image as well as an officially supported `packet <http://nginx.org/en/linux_packages.html>`_ for major linux distributions.
