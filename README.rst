@@ -10,7 +10,7 @@ Intro
 
 This repo contains complete examples for various use cases where `njs <http://nginx.org/en/docs/njs/>`_ is useful. The document as well as `njs documentation <http://nginx.org/en/docs/njs/>`_ expects some familiarity with and understanding of nginx. Beginners should refer to the official `admin guide <https://docs.nginx.com/nginx/admin-guide/>`_.
 
-Note: the examples below work with njs >= `0.5.2 <http://nginx.org/en/docs/njs/changes.html#njs0.5.2>`_. To see the current version run the following command: ``docker run -i -t nginx:latest /usr/bin/njs -V``.
+Note: the examples below work with njs >= `0.7.0 <http://nginx.org/en/docs/njs/changes.html#njs0.7.0>`_. To see the current version run the following command: ``docker run -i -t nginx:latest /usr/bin/njs -V``.
 
 Running inside Docker
 ---------------------
@@ -402,21 +402,23 @@ example.js:
 
 .. code-block:: js
 
-    function generate_hs256_jwt(claims, key, valid) {
-        var header = { typ: "JWT",  alg: "HS256" };
-        var claims = Object.assign(claims, {exp: Math.floor(Date.now()/1000) + valid});
+    async function generate_hs256_jwt(init_claims, key, valid) {
+        let header = { typ: "JWT",  alg: "HS256" };
+        let claims = Object.assign(init_claims, {exp: Math.floor(Date.now()/1000) + valid});
 
-        var s = [header, claims].map(JSON.stringify)
-                                .map(v=>v.toString('base64url'))
+        let s = [header, claims].map(JSON.stringify)
+                                .map(v=>Buffer.from(v).toString('base64url'))
                                 .join('.');
 
-        var h = require('crypto').createHmac('sha256', key);
+        let wc_key = await crypto.subtle.importKey('raw', key, {name: 'HMAC', hash: 'SHA-256'},
+                                                   false, ['sign']);
+        let sign = await crypto.subtle.sign({name: 'HMAC'}, wc_key, s);
 
-        return s + '.' + h.update(s).digest('base64url');
+        return s + '.' + Buffer.from(sign).toString('base64url');
     }
 
-    function jwt(r) {
-        var claims = {
+    async function jwt(r) {
+        let claims = {
             iss: "nginx",
             sub: "alice",
             foo: 123,
@@ -424,7 +426,8 @@ example.js:
             zyx: false
         };
 
-        return generate_hs256_jwt(claims, process.env.JWT_GEN_KEY, 600);
+        let jwtv = await generate_hs256_jwt(claims, process.env.JWT_GEN_KEY, 600);
+        r.setReturnValue(jwtv);
     }
 
     export default {jwt}
