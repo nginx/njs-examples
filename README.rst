@@ -866,29 +866,23 @@ example.js:
 
 .. code-block:: js
 
-  function join(r) {
-      join_subrequests(r, ['/foo', '/bar']);
-  }
+    async function join(r) {
+        join_subrequests(r, ['/foo', '/bar']);
+    }
 
-  function join_subrequests(r, subs) {
-      var parts = [];
+    async function join_subrequests(r, subs) {
+        let results = await Promise.all(subs.map(uri => r.subrequest(uri)));
 
-      function done(reply) {
-          parts.push({ uri:  reply.uri,
-                       code: reply.status,
-                       body: reply.responseBody });
+         let response = results.map(reply => ({
+            uri:  reply.uri,
+            code: reply.status,
+            body: reply.responseBody,
+         }));
 
-          if (parts.length == subs.length) {
-              r.return(200, JSON.stringify(parts));
-          }
-      }
+        r.return(200, JSON.stringify(response));
+    }
 
-      for (var i in subs) {
-          r.subrequest(subs[i], done);
-      }
-  }
-
-  export default {join}
+    export default {join};
 
 Checking:
 
