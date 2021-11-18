@@ -17,7 +17,7 @@ Running inside Docker
 
 .. code-block:: shell
 
-  git clone https://github.com/xeioex/njs-examples
+  git clone https://github.com/nginx/njs-examples
   cd njs-examples
   EXAMPLE='http/hello'
   docker run --rm --name njs_example  -v $(pwd)/conf/$EXAMPLE.conf:/etc/nginx/nginx.conf:ro -v $(pwd)/njs/:/etc/nginx/njs/:ro -p 80:80 -p 443:443 -d nginx
