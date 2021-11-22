@@ -14,6 +14,7 @@ Note: the examples below work with njs >= `0.7.0 <http://nginx.org/en/docs/njs/c
 
 Running inside Docker
 ---------------------
+Public nginx docker image contains open source version of nginx. To run examples for NGINX-PLUS, you have to `build <https://www.nginx.com/blog/deploying-nginx-nginx-plus-docker/>`_ your own docker image.
 
 .. code-block:: shell
 
@@ -21,6 +22,8 @@ Running inside Docker
   cd njs-examples
   EXAMPLE='http/hello'
   docker run --rm --name njs_example  -v $(pwd)/conf/$EXAMPLE.conf:/etc/nginx/nginx.conf:ro -v $(pwd)/njs/:/etc/nginx/njs/:ro -p 80:80 -p 443:443 -d nginx
+  # for NGINX-PLUS examples,
+  # docker run ... -d mynginxplus
 
   # Stopping.
   docker stop njs_example
@@ -1092,6 +1095,73 @@ Checking:
 
   curl http://localhost/
   hello world
+
+Logging
+-------
+
+Logging the Number of Requests Per Client [http/logging/num_requests]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note:: The `keyval <http://nginx.org/en/docs/http/ngx_http_keyval_module.html#keyval>`_ and `keyval_zone <http://nginx.org/en/docs/http/ngx_http_keyval_module.html#keyval_zone>`_ directives are available as part of our `commercial subscription <https://www.nginx.com/products/nginx/>`_.
+
+In this example `keyval <http://nginx.org/en/docs/http/ngx_http_keyval_module.html#keyval>`_ is used to count (accross all nginx workers) the incoming requests from the same ip address.
+
+nginx.conf:
+
+.. code-block:: nginx
+
+  ...
+
+  http {
+    js_path "/etc/nginx/njs/";
+
+    js_import main from http/logging/num_requests.js;
+
+    js_set $num_requests http.num_requests;
+
+    keyval_zone zone=foo:10m;
+
+    keyval $remote_addr $foo zone=foo;
+
+    log_format bar '$remote_addr [$time_local] $num_requests';
+
+    access_log logs/access.log bar;
+
+    server {
+          listen 80;
+
+          location / {
+              return 200;
+          }
+    }
+  }
+
+example.js:
+
+.. code-block:: js
+
+    function num_requests(r) {
+        var n = r.variables.foo;
+        n = n ? Number(n) + 1 : 1;
+        r.variables.foo = n;
+        return n;
+    }
+
+    export default {num_requests};
+
+Checking:
+
+.. code-block:: shell
+
+  curl http://localhost/aa; curl http://localhost/aa; curl http://localhost/aa
+  curl --interface 127.0.0.2 http://localhost/aa; curl --interface 127.0.0.2 http://localhost/aa
+
+  docker logs njs_example
+  127.0.0.1 [22/Nov/2021:16:55:06 +0000] 1
+  127.0.0.1 [22/Nov/2021:16:55:07 +0000] 2
+  127.0.0.1 [22/Nov/2021:16:55:29 +0000] 3
+  127.0.0.2 [22/Nov/2021:18:20:24 +0000] 1
+  127.0.0.2 [22/Nov/2021:18:20:25 +0000] 2
 
 Stream
 ======
