@@ -1163,6 +1163,80 @@ Checking:
   127.0.0.2 [22/Nov/2021:18:20:24 +0000] 1
   127.0.0.2 [22/Nov/2021:18:20:25 +0000] 2
 
+NGINX-PLUS API
+--------------
+
+Setting keyval using a subrequest [http/api/set_keyval]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note:: The `keyval <http://nginx.org/en/docs/http/ngx_http_keyval_module.html#keyval>`_, `api <http://nginx.org/en/docs/http/ngx_http_api_module.html#api>`_ and `keyval_zone <http://nginx.org/en/docs/http/ngx_http_keyval_module.html#keyval_zone>`_ directives are available as part of our `commercial subscription <https://www.nginx.com/products/nginx/>`_.
+
+nginx.conf:
+
+.. code-block:: nginx
+
+  ...
+
+  http {
+    js_path "/etc/nginx/njs/";
+
+    js_import main from http/api/set_keyval.js;
+
+    keyval_zone zone=foo:10m;
+
+    server {
+          listen 80;
+
+          location /keyval {
+              js_content main.set_keyval;
+          }
+
+          location /api {
+              internal;
+              api write=on;
+          }
+
+          location /api/ro {
+              api;
+          }
+    }
+
+example.js:
+
+.. code-block:: js
+
+    async function set_keyval(r) {
+        let method = r.args.method ? r.args.method : 'POST';
+        let res = await r.subrequest('/api/7/http/keyvals/foo',
+                                     { method, r.requestBody});
+
+        if (res.status >= 300) {
+            r.return(res.status, res.responseBody);
+            return;
+        }
+
+        r.return(200);
+    }
+
+    export default {set_keyval};
+
+Checking:
+
+.. code-block:: shell
+
+  curl http://localhost/api/ro/7/http/keyvals/foo
+  {}
+  curl http://localhost:8000/keyval -d '{"a":1}'
+  OK
+  curl http://localhost/api/ro/7/http/keyvals/foo
+  {"a":"1"}
+  curl http://localhost:8000/keyval -d '{"a":2}'
+  {"error":{"status":409,"text":"key \"a\" already exists","code":"KeyvalKeyExists"},"request_id":"cbec775883f6b10f2fe79e27d3f249ce","href":"https://nginx.org/en/docs/http/ngx_http_api_module.html"}
+  curl http://localhost:8000/keyval?method=PATCH -d '{"a":2}'
+  OK
+  curl http://localhost:8000/api/ro/7/http/keyvals/foo
+  {"a":"2"}
+
 Stream
 ======
 
