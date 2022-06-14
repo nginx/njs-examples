@@ -8,7 +8,7 @@ function authorize(r) {
 
     var h = require('crypto').createHmac('sha1', process.env.SECRET_KEY);
 
-	h.update(r.uri);
+    h.update(r.uri);
 
     switch (r.method) {
     case 'GET':

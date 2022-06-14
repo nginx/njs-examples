@@ -24,7 +24,7 @@ function commit_db(map) {
 
     try {
         fs.writeFileSync(DB, JSON.stringify(map));
-    }  catch (e) {
+    } catch (e) {
         ret = 500;
     }
 
