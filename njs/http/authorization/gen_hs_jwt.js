@@ -1,5 +1,5 @@
 async function generate_hs256_jwt(init_claims, key, valid) {
-    let header = { typ: "JWT",  alg: "HS256" };
+    let header = {typ: "JWT", alg: "HS256"};
     let claims = Object.assign(init_claims, {exp: Math.floor(Date.now()/1000) + valid});
 
     let s = [header, claims].map(JSON.stringify)

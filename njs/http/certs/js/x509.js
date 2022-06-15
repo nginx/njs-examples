@@ -106,10 +106,10 @@ function asn1_parse_bit_string(buf) {
 
     // shift string right and convert to hex
     for (n = 1; n < buf.length; n++) {
-         var char_code = buf.charCodeAt(n) >> shift + upper_bits;
-         symbol = String.fromCharCode(char_code).toBytes().toString("hex");
-         upper_bits = (buf.charCodeAt(n) << shift) & 0xff;
-         value += symbol;
+        var char_code = buf.charCodeAt(n) >> shift + upper_bits;
+        symbol = String.fromCharCode(char_code).toBytes().toString("hex");
+        upper_bits = (buf.charCodeAt(n) << shift) & 0xff;
+        value += symbol;
     }
     return value;
 }
@@ -267,12 +267,12 @@ function asn1_read(buf) {
         }
 
         if (++pointer > buf.length)
-             throw "Went out of buffer: " + pointer + " " + buf.length;
+            throw "Went out of buffer: " + pointer + " " + buf.length;
         var lp = asn1_read_length(buf, pointer);
         length = lp[0];
         pointer = lp[1];
         if ((pointer + length) > buf.length)
-             throw "length exceeds buf side: " + length + " " + pointer + " "
+            throw "length exceeds buf side: " + length + " " + pointer + " "
                  +  buf.length;
         if (is_constructed) {
             a.push(asn1_read(buf.slice(pointer, pointer + length)));
