@@ -297,6 +297,29 @@ function is_oid_exist(cert, oid) {
     return false;
 }
 
+// returns all the matching field with the specified 'oid' as a list
+function get_oid_value_all(cert, oid) {
+
+    var values = [];
+
+    for (var n = 0; n < cert.length; n++) {
+        if (Array.isArray(cert[n])) {
+            var r = get_oid_value_all(cert[n], oid);
+	    if (r.length > 0) {
+		values = values.concat(r);
+	    }
+        } else {
+            if (cert[n] == oid) {
+                if (n < cert.length) {
+                    // push next element in array
+		    values.push(cert[n+1]);
+                }
+            }
+        }
+    }
+    return values;
+}
+
 function get_oid_value(cert, oid) {
     for (var n = 0; n < cert.length; n++) {
         if (Array.isArray(cert[n])) {
@@ -327,4 +350,4 @@ function parse_pem_cert(pem) {
     return asn1_read(der);
 }
 
-export default {asn1_read, parse_pem_cert, is_oid_exist, get_oid_value};
+export default {asn1_read, parse_pem_cert, is_oid_exist, get_oid_value, get_oid_value_all};
