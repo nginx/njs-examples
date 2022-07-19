@@ -897,7 +897,7 @@ Checking:
 
 Subrequests chaining [http/subrequests_chaining]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Subrequests chaining using JS promises.
+Subrequests chaining.
 
 nginx.conf:
 
@@ -936,24 +936,27 @@ example.js:
 
 .. code-block:: js
 
-    function process(r) {
-        r.subrequest('/auth')
-            .then(reply => JSON.parse(reply.responseBody))
-            .then(response => {
-                if (!response['token']) {
-                    throw new Error("token is not available");
-                }
-                return response['token'];
-            })
-        .then(token => {
-            r.subrequest('/backend', `token=${token}`)
-                .then(reply => r.return(reply.status, reply.responseBody));
-        })
-        .catch(e => r.return(500, e));
+    async function process(r) {
+        try {
+            let reply = await r.subrequest('/auth')
+            let response = JSON.parse((reply.responseBody));
+            let token = response['token'];
+
+            if (!token) {
+                throw new Error("token is not available");
+            }
+
+            let backend_reply = await r.subrequest('/backend', `token=${token}`);
+            r.return(backend_reply.status, backend_reply.responseBody);
+
+        } catch (e) {
+            r.return(500, e);
+        }
     }
 
     function authenticate(r) {
-        if (r.headersIn.Authorization.slice(7) === 'secret') {
+        let auth = r.headersIn.Authorization;
+        if (auth && auth.slice(7) === 'secret') {
             r.return(200, JSON.stringify({status: "OK", token:42}));
             return;
         }
@@ -961,7 +964,7 @@ example.js:
         r.return(403, JSON.stringify({status: "INVALID"}));
     }
 
-    export default {process, authenticate}
+    export default {process, authenticate};
 
 Checking:
 
@@ -971,17 +974,10 @@ Checking:
   Token is 42
 
   curl http://localhost/start
-  SyntaxError: Unexpected token at position 0
-  at JSON.parse (native)
-  at anonymous (example.js:3)
-  at native (native)
-  at main (native)
+  Error: token is not available
 
   curl http://localhost/start -H 'Authorization: Bearer secre'
   Error: token is not available
-  at anonymous (example.js:4)
-  at native (native)
-  at main (native)
 
 Modifying response
 ------------------
