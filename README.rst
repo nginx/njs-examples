@@ -829,6 +829,49 @@ Checking:
   curl https://localhost/ --insecure --key njs/http/certs/ca/intermediate/private/client.key.pem --cert njs/http/certs/ca/intermediate/certs/client.cert.pem  --pass secretpassword
   ["7f000001","00000000000000000000000000000001","example.com","www2.example.com"]
 
+Fetch
+-----
+
+HTTPS fetch example [http/certs/fetch_https]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+nginx.conf:
+
+.. code-block:: nginx
+
+    ...
+
+    http {
+          js_path "/etc/nginx/njs/";
+
+          js_import main from http/certs/js/fetch_https.js;
+
+          resolver 1.1.1.1;
+
+          server {
+                listen 80;
+
+                location / {
+                    js_content main.fetch;
+                    js_fetch_trusted_certificate /etc/nginx/njs/http/certs/ISRG_Root_X1.pem;
+                }
+          }
+    }
+
+example.js:
+
+.. code-block:: js
+
+    async function fetch(r) {
+        let reply = await ngx.fetch('https://nginx.org/');
+        let text = await reply.text();
+        let footer = "----------NGINX.ORG-----------";
+
+        r.return(200, `${footer}\n${text.substring(0, 200)} ...${text.length - 200} left...\n${footer}`);
+    }
+
+    export default {fetch};
+
 Proxying
 --------
 
