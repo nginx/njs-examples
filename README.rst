@@ -1545,6 +1545,97 @@ example.js:
   curl http://localhost/read
   200 <empty reply>
 
+Webcrypto (AES-GSM) [misc/aes_gsm]
+----------------------------------
+
+nginx.conf:
+
+.. code-block:: nginx
+
+    http {
+      js_path "/etc/nginx/njs/";
+
+      js_import main from misc/aes_gsm.js;
+
+      server {
+            listen 80;
+
+            location /encrypt {
+                js_content main.encrypt;
+            }
+
+            location /decrypt {
+                js_content main.decrypt;
+            }
+      }
+    }
+
+example.js:
+
+.. code-block:: js
+
+    async function encryptUAM(key_in, iv, text) {
+        const alg = { name: 'AES-GCM', iv: iv ? Buffer.from(iv, 'hex')
+                                              : crypto.getRandomValues(new Uint8Array(12)) };
+
+        const sha256 = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key_in));
+        const key = await crypto.subtle.importKey('raw', sha256, alg, false, ['encrypt']);
+
+        const cipher = await crypto.subtle.encrypt(alg, key, new TextEncoder().encode(text));
+
+        return JSON.stringify({
+            cipher: btoa(String.fromCharCode.apply(null, new Uint8Array(cipher))),
+                iv: btoa(String.fromCharCode.apply(null, new Uint8Array(alg.iv))),
+        });
+    }
+
+    async function decryptUAM(key_in, value) {
+        value = JSON.parse(value);
+
+        ngx.log(ngx.ERR, njs.dump(value))
+        const alg = { name: 'AES-GCM', iv: Buffer.from(value.iv, 'base64') };
+        const sha256 = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key_in));
+        const key = await crypto.subtle.importKey('raw', sha256, alg, false, ['decrypt']);
+
+        const decrypt = await crypto.subtle.decrypt(alg, key, Buffer.from(value.cipher, 'base64'));
+        ngx.log(ngx.ERR, njs.dump(new Uint8Array(decrypt)))
+        return new TextDecoder().decode(decrypt);
+    }
+
+    async function encrypt(r) {
+        try {
+            let encrypted = await encryptUAM(r.args.key, r.args.iv, r.requestText);
+            r.return(200, encrypted);
+        } catch (e) {
+            r.return(500, `encryption failed with ${e.message}`);
+        }
+    }
+
+    async function decrypt(r) {
+        try {
+            let decrypted = await decryptUAM(r.args.key, r.requestText);
+            r.return(200, decrypted);
+        } catch (e) {
+            r.return(500, `decryption failed with ${e.message}`);
+        }
+    }
+
+    export default {encrypt, decrypt};
+
+.. code-block:: shell
+
+    curl 'http://localhost/encrypt?key=mySecret&iv=000000000000000000000001' -d TEXT-TO-BE-ENCODED
+    {"cipher":"kLKXeb/h1inwXYlP7M504xCD+/1sF4yesCSUc7/OJiyPyw==","iv":"AAAAAAAAAAAAAAAB"}
+
+    curl 'http://localhost/decrypt?key=mySecret' -d '{"cipher":"kLKXeb/h1inwXYlP7M504xCD+/1sF4yesCSUc7/OJiyPyw==","iv":"AAAAAAAAAAAAAAAA"}'
+    decryption failed with EVP_DecryptFinal_ex() failed
+
+    curl 'http://localhost/decrypt?key=mySecre' -d '{"cipher":"kLKXeb/h1inwXYlP7M504xCD+/1sF4yesCSUc7/OJiyPyw==","iv":"AAAAAAAAAAAAAAAB"}'
+    decryption failed with EVP_DecryptFinal_ex() failed
+
+    curl 'http://localhost/decrypt?key=mySecret' -d '{"cipher":"kLKXeb/h1inwXYlP7M504xCD+/1sF4yesCSUc7/OJiyPyw==","iv":"AAAAAAAAAAAAAAAB"}'
+    TEXT-TO-BE-ENCODED
+
 Command line interface
 ======================
 
