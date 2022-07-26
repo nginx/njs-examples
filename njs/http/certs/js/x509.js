@@ -342,10 +342,10 @@ function parse_pem_cert(pem) {
     var der = pem.split(/\n/);
 
     if (pem.match('CERTIFICATE')) {
-        der = der.slice(1, -1);
+        der = der.slice(1, -2);
     }
 
-    der = String.bytesFrom(der.join(''), 'base64');
+    der = atob(der.join(''));
 
     return asn1_read(der);
 }
