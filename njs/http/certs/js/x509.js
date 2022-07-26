@@ -1,7 +1,7 @@
 function asn1_parse_oid(buf) {
     var oid = [];
     var sid = 0;
-    var cur_octet = buf.charCodeAt(0)
+    var cur_octet = buf[0];
 
     if (cur_octet < 40) {
         oid.push(0);
@@ -17,7 +17,7 @@ function asn1_parse_oid(buf) {
     }
 
     for (var n = 1; n < buf.length; n++) {
-        cur_octet = buf.charCodeAt(n);
+        cur_octet = buf[n];
 
         if (cur_octet < 0x80) {
             sid += cur_octet;
@@ -36,7 +36,7 @@ function asn1_parse_oid(buf) {
         }
     }
 
-    if (buf.slice(-1).charCodeAt(0) >= 0x80)
+    if (buf.slice(-1)[0] >= 0x80)
         throw "Last octet in oid buffer has highest bit set to 1";
 
     return oid.join('.')
@@ -52,19 +52,19 @@ function asn1_parse_integer(buf) {
     var value = 0;
     var is_negative = false;
 
-    if (buf.charCodeAt(0) & 0x80) {
+    if (buf[0] & 0x80) {
         is_negative = true;
-        value = buf.charCodeAt(0) & 0x7f;
+        value = buf[0] & 0x7f;
         var compl_int = 1 << (8 * buf.length - 1)
 
     } else {
-        value = buf.charCodeAt(0);
+        value = buf[0];
     }
 
     if (buf.length > 1) {
         for (var n = 1; n < buf.length; n++) {
             value <<= 8;
-            value += buf.charCodeAt(n);
+            value += buf[n];
         }
     }
 
@@ -75,18 +75,18 @@ function asn1_parse_integer(buf) {
 }
 
 function asn1_parse_ascii_string(buf) {
-    return buf;
+    return buf.toString();
 }
 
 function asn1_parse_ia5_string(buf) {
     if (is_ia5(buf))
-        return buf;
+        return buf.toString();
     else
         throw "Not a IA5String: " + buf;
 }
 
 function asn1_parse_utf8_string(buf) {
-    return buf.fromUTF8()
+    return buf.toString('utf8');
 }
 
 function asn1_parse_bmp_string(buf) {
@@ -98,10 +98,10 @@ function asn1_parse_universal_string(buf) {
 }
 
 function asn1_parse_bit_string(buf) {
-    if (buf.charCodeAt(0) == 0)
+    if (buf[0] == 0)
         return buf.slice(1).toString("hex");
 
-    var shift = buf.charCodeAt(0)
+    var shift = buf[0]
     if (shift > 7)
         throw "Incorrect shift in bitstring: " + shift;
 
@@ -110,10 +110,10 @@ function asn1_parse_bit_string(buf) {
     var symbol = "";
 
     // shift string right and convert to hex
-    for (n = 1; n < buf.length; n++) {
-         var char_code = buf.charCodeAt(n) >> shift + upper_bits;
-         symbol = String.fromCharCode(char_code).toBytes().toString("hex");
-         upper_bits = (buf.charCodeAt(n) << shift) & 0xff;
+    for (var n = 1; n < buf.length; n++) {
+         var char_code = buf[n] >> shift + upper_bits;
+         symbol = char_code.toString(16);
+         upper_bits = (buf[n] << shift) & 0xff;
          value += symbol;
     }
 
@@ -130,7 +130,7 @@ function asn1_parse_any(buf) {
 
 function is_ia5(buf) {
     for (var n = 0; n < buf.length; n++) {
-        var s = buf.charCodeAt(n);
+        var s = buf[n];
         if (s > 0x7e)
             return false;
     }
@@ -139,7 +139,7 @@ function is_ia5(buf) {
 }
 
 function asn1_read_length(buf, pointer) {
-    var s = buf.charCodeAt(pointer);
+    var s = buf[pointer];
     if (s == 0x80 || s == 0xff)
         throw "indefinite length is not supported"
 
@@ -158,8 +158,8 @@ function asn1_read_length(buf, pointer) {
 
         var length = 0;
         for (var n = 0; n < l; n++) {
-            length += Math.pow(256, l - n - 1) * buf.charCodeAt(++pointer);
-            if (n == 6 && buf.charCodeAt(pointer) > 0x1f)
+            length += Math.pow(256, l - n - 1) * buf[++pointer];
+            if (n == 6 && buf[pointer] > 0x1f)
                 throw "Too big length, exceeds MAX_SAFE_INTEGER";
         }
 
@@ -256,7 +256,7 @@ function asn1_read(buf) {
 
     while (pointer < buf.length) {
         // read type: 7 & 8 bits define class, 6 bit if it is constructed
-        s = buf.charCodeAt(pointer);
+        s = buf[pointer];
         tag_class = s >> 6;
         is_constructed = s & 0x20;
         tag = s & 0x1f;
@@ -275,9 +275,9 @@ function asn1_read(buf) {
                     throw "Went out of buffer: " + pointer + " " + buf.length;
 
                 tag <<= 7;
-                tag += (buf.charCodeAt(pointer) & 0x7f);
+                tag += (buf[pointer] & 0x7f);
 
-            } while (buf.charCodeAt(pointer) > 0x80)
+            } while (buf[pointer] > 0x80)
         }
 
         if (++pointer > buf.length)
@@ -369,9 +369,7 @@ function parse_pem_cert(pem) {
         der = der.slice(1, -2);
     }
 
-    der = atob(der.join(''));
-
-    return asn1_read(der);
+    return asn1_read(Buffer.from(der.join(''), 'base64'));
 }
 
 export default {asn1_read, parse_pem_cert, is_oid_exist, get_oid_value, get_oid_value_all};
