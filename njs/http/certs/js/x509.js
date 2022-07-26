@@ -6,9 +6,11 @@ function asn1_parse_oid(buf) {
     if (cur_octet < 40) {
         oid.push(0);
         oid.push(cur_octet);
+
     } else if (cur_octet < 80) {
         oid.push(1);
         oid.push(cur_octet - 40);
+
     } else {
         oid.push(2);
         oid.push(cur_octet - 80);
@@ -16,6 +18,7 @@ function asn1_parse_oid(buf) {
 
     for (var n = 1; n < buf.length; n++) {
         cur_octet = buf.charCodeAt(n);
+
         if (cur_octet < 0x80) {
             sid += cur_octet;
 
@@ -24,6 +27,7 @@ function asn1_parse_oid(buf) {
 
             oid.push(sid);
             sid = 0;
+
         } else {
             sid += cur_octet & 0x7f; sid <<= 7;
 
@@ -52,6 +56,7 @@ function asn1_parse_integer(buf) {
         is_negative = true;
         value = buf.charCodeAt(0) & 0x7f;
         var compl_int = 1 << (8 * buf.length - 1)
+
     } else {
         value = buf.charCodeAt(0);
     }
@@ -111,6 +116,7 @@ function asn1_parse_bit_string(buf) {
          upper_bits = (buf.charCodeAt(n) << shift) & 0xff;
          value += symbol;
     }
+
     return value;
 }
 
@@ -141,12 +147,15 @@ function asn1_read_length(buf, pointer) {
         // length is less than 128
         pointer++;
         return [s, pointer];
+
     } else {
         var l = s & 0x7f;
         if (l > 7)
             throw "Too big length, exceeds MAX_SAFE_INTEGER: " + l;
+
         if ((pointer + l) >= buf.length)
             throw "Went out of buffer: " + (pointer + l) + " " + buf.length;
+
         var length = 0;
         for (var n = 0; n < l; n++) {
             length += Math.pow(256, l - n - 1) * buf.charCodeAt(++pointer);
@@ -154,82 +163,82 @@ function asn1_read_length(buf, pointer) {
                 throw "Too big length, exceeds MAX_SAFE_INTEGER";
         }
 
-        return [length, pointer+1];
+        return [length, pointer + 1];
     }
 }
 
 function asn1_parse_primitive(cls, tag, buf) {
     if (cls == 0) {
         switch(tag) {
-            // INTEGER
-            case 0x02: return asn1_parse_integer(buf);
-            // BIT STRING
-            case 0x03:
-                       try {
-                           return asn1_read(buf);
-                       } catch(e) {
-                           return asn1_parse_bit_string(buf);
-                       }
-            // OCTET STRING
-            case 0x04:
-                       try {
-                           return asn1_read(buf);
-                       } catch(e) {
-                           return asn1_parse_octet_string(buf);
-                       }
-            // OBJECT IDENTIFIER
-            case 0x06: return asn1_parse_oid(buf);
-            // UTF8String
-            case 0x0c: return asn1_parse_utf8_string(buf);
-            // TIME
-            case 0x0e:
-            // NumericString
-            case 0x12:
-            // PrintableString
-            case 0x13:
-            // T61String
-            case 0x14:
-            // VideotexString
-            case 0x15:
-                       return asn1_parse_ascii_string(buf);
-            // IA5String
-            case 0x16: return asn1_parse_ia5_string(buf);
-            // UTCTime
-            case 0x17:
-            // GeneralizedTime
-            case 0x18:
-            // GraphicString
-            case 0x19:
-            // VisibleString
-            case 0x1a:
-            // GeneralString
-            case 0x1b:
-                       return asn1_parse_ascii_string(buf);
-            // UniversalString
-            case 0x1c: return asn1_parse_universal_string(buf);
-            // CHARACTER STRING
-            case 0x1d: return asn1_parse_ascii_string(buf);
-            // BMPString
-            case 0x1e: return asn1_parse_bmp_string(buf);
-            // DATE
-            case 0x1f:
-            // TIME-OF-DAY
-            case 0x20:
-            // DATE-TIME
-            case 0x21:
-            // DURATION
-            case 0x22:
-                       return asn1_parse_ascii_string(buf);
-            default: return asn1_parse_any(buf);
+        // INTEGER
+        case 0x02: return asn1_parse_integer(buf);
+        // BIT STRING
+        case 0x03:
+           try {
+               return asn1_read(buf);
+           } catch(e) {
+               return asn1_parse_bit_string(buf);
+           }
+        // OCTET STRING
+        case 0x04:
+           try {
+               return asn1_read(buf);
+           } catch(e) {
+               return asn1_parse_octet_string(buf);
+           }
+        // OBJECT IDENTIFIER
+        case 0x06: return asn1_parse_oid(buf);
+        // UTF8String
+        case 0x0c: return asn1_parse_utf8_string(buf);
+        // TIME
+        case 0x0e:
+        // NumericString
+        case 0x12:
+        // PrintableString
+        case 0x13:
+        // T61String
+        case 0x14:
+        // VideotexString
+        case 0x15:
+           return asn1_parse_ascii_string(buf);
+        // IA5String
+        case 0x16: return asn1_parse_ia5_string(buf);
+        // UTCTime
+        case 0x17:
+        // GeneralizedTime
+        case 0x18:
+        // GraphicString
+        case 0x19:
+        // VisibleString
+        case 0x1a:
+        // GeneralString
+        case 0x1b:
+           return asn1_parse_ascii_string(buf);
+        // UniversalString
+        case 0x1c: return asn1_parse_universal_string(buf);
+        // CHARACTER STRING
+        case 0x1d: return asn1_parse_ascii_string(buf);
+        // BMPString
+        case 0x1e: return asn1_parse_bmp_string(buf);
+        // DATE
+        case 0x1f:
+        // TIME-OF-DAY
+        case 0x20:
+        // DATE-TIME
+        case 0x21:
+        // DURATION
+        case 0x22:
+           return asn1_parse_ascii_string(buf);
+        default: return asn1_parse_any(buf);
         }
 
     } else if (cls == 2) {
         switch(tag) {
-          case 0x00: return asn1_parse_any(buf);
-          case 0x01: return asn1_parse_ascii_string(buf);
-          case 0x02: return asn1_parse_ascii_string(buf);
-          case 0x06: return asn1_parse_ascii_string(buf);
-          default: return asn1_parse_any(buf);
+        case 0x00: return asn1_parse_any(buf);
+        case 0x01: return asn1_parse_ascii_string(buf);
+        case 0x02: return asn1_parse_ascii_string(buf);
+        case 0x06: return asn1_parse_ascii_string(buf);
+        default: return asn1_parse_any(buf);
         }
     }
 
@@ -255,32 +264,43 @@ function asn1_read(buf) {
         if (tag == 0x1f) {
             tag = 0;
             var i = 0;
+
             do {
                 if (i > 3)
                     throw "Too big tag value" + tag;
+
                 i++;
+
                 if (++pointer >= buf.length)
                     throw "Went out of buffer: " + pointer + " " + buf.length;
+
                 tag <<= 7;
                 tag += (buf.charCodeAt(pointer) & 0x7f);
+
             } while (buf.charCodeAt(pointer) > 0x80)
         }
 
         if (++pointer > buf.length)
              throw "Went out of buffer: " + pointer + " " + buf.length;
+
         var lp = asn1_read_length(buf, pointer);
         length = lp[0];
         pointer = lp[1];
+
         if ((pointer + length) > buf.length)
              throw "length exceeds buf side: " + length + " " + pointer + " "
                  +  buf.length;
+
         if (is_constructed) {
             a.push(asn1_read(buf.slice(pointer, pointer + length)));
+
         } else {
             a.push(asn1_parse_primitive(tag_class, tag,buf.slice(pointer, pointer + length)));
         }
+
         pointer += length;
     }
+
     return a;
 }
 
@@ -289,34 +309,36 @@ function is_oid_exist(cert, oid) {
         if (Array.isArray(cert[n])) {
             if (is_oid_exist(cert[n], oid))
                 return true;
+
         } else {
             if (cert[n] == oid)
                 return true;
         }
     }
+
     return false;
 }
 
 // returns all the matching field with the specified 'oid' as a list
 function get_oid_value_all(cert, oid) {
-
     var values = [];
 
     for (var n = 0; n < cert.length; n++) {
         if (Array.isArray(cert[n])) {
             var r = get_oid_value_all(cert[n], oid);
-	    if (r.length > 0) {
-		values = values.concat(r);
-	    }
+            if (r.length > 0) {
+            values = values.concat(r);
+            }
         } else {
             if (cert[n] == oid) {
                 if (n < cert.length) {
                     // push next element in array
-		    values.push(cert[n+1]);
+                    values.push(cert[n+1]);
                 }
             }
         }
     }
+
     return values;
 }
 
@@ -326,6 +348,7 @@ function get_oid_value(cert, oid) {
             var r = get_oid_value(cert[n], oid);
             if (r !== false)
                 return r;
+
         } else {
             if (cert[n] == oid) {
                 if (n < cert.length) {
@@ -335,6 +358,7 @@ function get_oid_value(cert, oid) {
             }
         }
     }
+
     return false;
 }
 
