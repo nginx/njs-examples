@@ -1685,4 +1685,5 @@ Command line interface
 Additional learning materials
 =============================
 
-`soulteary/njs-learning-materials <https://github.com/soulteary/njs-learning-materials>`_
+* `soulteary/njs-learning-materials <https://github.com/soulteary/njs-learning-materials>`_
+* `4141done/talks-njs_for_fun <https://github.com/4141done/talks-njs_for_fun>`_
