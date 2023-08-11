@@ -829,6 +829,153 @@ Checking:
   curl https://localhost/ --insecure --key njs/http/certs/ca/intermediate/private/client.key.pem --cert njs/http/certs/ca/intermediate/certs/client.cert.pem  --pass secretpassword
   ["7f000001","00000000000000000000000000000001","example.com","www2.example.com"]
 
+Securely serve encrypted traffic without server restarts when certificate or key changes occur. [http/certs/dynamic]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Configure NGINX to serve encrypted traffic without server restarts when certificate or key changes occur by using `js_shared_dict_zone <https://nginx.org/en/docs/http/ngx_http_js_module.html#js_shared_dict_zone>`_ as a cache.
+
+Note: this example below work with njs >= `0.8.0 <http://nginx.org/en/docs/njs/changes.html#njs0.8.0>`_.
+
+This example demonstrates:
+
+ - Use of `js_set <https://nginx.org/en/docs/http/ngx_http_js_module.html#js_set>`_ in combination with ``ssl_certificate data:$var;`` to use NJS to resolve value of cert/key during handshake.
+ - Use of `js_shared_dict_zone <https://nginx.org/en/docs/http/ngx_http_js_module.html#js_shared_dict_zone>`_ to store cert/key in memory.
+ - Implementation a simple RESTful API to manage ``shared_dict`` to get/set certificate/key files.
+ - How to deal with ``Content-Disposition`` while handling file uploads in NJS.
+
+nginx.conf:
+
+.. code-block:: nginx
+
+  ...
+
+  load_module modules/ngx_http_js_module.so;
+  error_log /dev/stdout debug;
+  events {  }
+
+  http {
+    js_path "/etc/nginx/njs/";
+    js_import main from http/certs/js/dynamic.js;
+    js_shared_dict_zone zone=kv:1m;
+
+    server {
+      listen 80;
+      listen 443 ssl;
+      server_name www.example.com;
+
+      js_var $shared_dict_zone_name kv;
+      js_var $cert_folder '/tmp/';
+
+      js_set $dynamic_ssl_cert main.js_cert;
+      js_set $dynamic_ssl_key main.js_key;
+
+      ssl_password_file /etc/nginx/njs/http/certs/ca/password;
+      ssl_certificate data:$dynamic_ssl_cert;
+      ssl_certificate_key data:$dynamic_ssl_key;
+
+      location = / {
+        js_content main.info;
+      }
+
+      location /kv {
+        js_content main.kv;
+      }
+
+      location = /clear {
+        js_content main.clear_cache;
+      }
+    }
+
+  }
+
+
+Here we would implement ``js_set`` handlers that reads cert/key from a FS or from `shared_dict`` (used as a cache here):
+
+.. code-block:: js
+
+  function js_cert(r) {
+    if (r.variables['ssl_server_name']) {
+      return read_cert_or_key(r, '.cert.pem');
+    } else {
+      return '';
+    }
+  }
+
+  function js_key(r) {
+    if (r.variables['ssl_server_name']) {
+      return read_cert_or_key(r, '.key.pem');
+    } else {
+      return '';
+    }
+  }
+
+  function joinPaths(...args) {
+    return args.join('/').replace(/\/+/g, '/');
+  }
+
+  function read_cert_or_key(r, fileExtension) {
+    let data = '';
+    let path = '';
+    const zone = r.variables['shared_dict_zone_name'];
+    let certName = r.variables.ssl_server_name;
+    let prefix = r.variables['cert_folder'] || '/etc/nginx/certs/';
+    path = joinPaths(prefix, certName + fileExtension);
+    r.log(`Resolving ${path}`);
+    const key = ['certs', path].join(':');
+    const cache = zone && ngx.shared && ngx.shared[zone];
+
+    if (cache) {
+      data = cache.get(key) || '';
+      if (data) {
+        r.log(`Read ${key} from cache`);
+        return data;
+      }
+    }
+    try {
+      data = fs.readFileSync(path, 'utf8');
+      r.log('Read from cache');
+    } catch (e) {
+      data = '';
+      r.log(`Error reading from file:', ${path}, . Error=${e}`);
+    }
+    if (cache && data) {
+      try {
+        cache.set(key, data);
+        r.log('Persisted in cache');
+      } catch (e) {
+        const errMsg = `Error writing to shared dict zone: ${zone}. Error=${e}`;
+        r.log(errMsg);
+      }
+    }
+    return data
+  }
+
+The rest of code can be found in the `njs/http/certs/js/dynamic.js <njs/http/certs/js/dynamic.js>`_.
+
+Checking:
+
+.. code-block:: shell
+
+  # when started and there is no cert/key it fails to serve HTTPS
+  curl -k --resolve www.example.com:443:127.0.0.1 https://www.example.com:443
+
+  curl http://localhost/
+
+  # Upload cert/key files. file name would be used to form a key for shared_dict
+  curl -iv http://localhost:80/kv -F cert=@njs/http/certs/ca/intermediate/certs/www.example.com.cert.pem -F key=@njs/http/certs/ca/intermediate/private/www.example.com.key.pem
+
+  # Get Certificate from shared_dict:
+  curl http://localhost/kv/www.example.com.cert.pem
+
+  # Get Private Key from shared_dict:
+  curl http://localhost/kv/www.example.com.key.pem
+
+  # now we can test HTTPS again
+  curl -k --resolve www.example.com:443:127.0.0.1 https://www.example.com
+
+  # Clear shared_dict
+  curl http://localhost/clear
+
+
 Fetch
 -----
 
