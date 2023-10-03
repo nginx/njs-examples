@@ -17,7 +17,7 @@ function authorize(r) {
         break;
 
     case 'POST':
-        var body  = r.requestBody;
+        var body  = r.requestText;
         if (r.headersIn['Content-Type'] != 'application/x-www-form-urlencoded'
             || !body.length)
         {

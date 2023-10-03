@@ -713,7 +713,7 @@ example.js:
             break;
 
         case 'POST':
-            var body  = r.requestBody;
+            var body  = r.requestText;
             if (r.headersIn['Content-Type'] != 'application/x-www-form-urlencoded'
                 || !body.length)
             {
@@ -1069,7 +1069,7 @@ example.js:
          let response = results.map(reply => ({
             uri:  reply.uri,
             code: reply.status,
-            body: reply.responseBody,
+            body: reply.responseText,
          }));
 
         r.return(200, JSON.stringify(response));
@@ -1129,7 +1129,7 @@ example.js:
     async function process(r) {
         try {
             let reply = await r.subrequest('/auth')
-            let response = JSON.parse((reply.responseBody));
+            let response = JSON.parse((reply.responseText));
             let token = response['token'];
 
             if (!token) {
@@ -1137,7 +1137,7 @@ example.js:
             }
 
             let backend_reply = await r.subrequest('/backend', `token=${token}`);
-            r.return(backend_reply.status, backend_reply.responseBody);
+            r.return(backend_reply.status, backend_reply.responseText);
 
         } catch (e) {
             r.return(500, e);
@@ -1394,10 +1394,10 @@ example.js:
     async function set_keyval(r) {
         let method = r.args.method ? r.args.method : 'POST';
         let res = await r.subrequest('/api/7/http/keyvals/foo',
-                                     { method, body: r.requestBody});
+                                     { method, body: r.requestText});
 
         if (res.status >= 300) {
-            r.return(res.status, res.responseBody);
+            r.return(res.status, res.responseText);
             return;
         }
 
@@ -1650,7 +1650,7 @@ example.js:
   var STORAGE = "/tmp/njs_storage"
 
   function push(r) {
-          fs.appendFileSync(STORAGE, r.requestBody);
+          fs.appendFileSync(STORAGE, r.requestText);
           r.return(200);
   }
 

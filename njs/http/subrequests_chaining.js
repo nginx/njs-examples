@@ -1,7 +1,7 @@
 async function process(r) {
     try {
         let reply = await r.subrequest('/auth')
-        let response = JSON.parse((reply.responseBody));
+        let response = JSON.parse((reply.responseText));
         let token = response['token'];
 
         if (!token) {
@@ -9,7 +9,7 @@ async function process(r) {
         }
 
         let backend_reply = await r.subrequest('/backend', `token=${token}`);
-        r.return(backend_reply.status, backend_reply.responseBody);
+        r.return(backend_reply.status, backend_reply.responseText);
 
     } catch (e) {
         r.return(500, e);

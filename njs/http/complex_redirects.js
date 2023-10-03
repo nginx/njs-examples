@@ -56,7 +56,7 @@ function resolv(r) {
 function add(r) {
     try {
         var map = open_db();
-        var body = r.requestBody;
+        var body = r.requestText;
 
         if (!body) {
             r.return(400, "request is empty");
@@ -81,7 +81,7 @@ function add(r) {
 function remove(r) {
     try {
         var map = open_db();
-        var body = r.requestBody;
+        var body = r.requestText;
 
         if (!body) {
             r.return(400, "request is empty");

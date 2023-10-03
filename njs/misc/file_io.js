@@ -2,7 +2,7 @@ var fs = require('fs');
 var STORAGE = "/tmp/njs_storage"
 
 function push(r) {
-    fs.appendFileSync(STORAGE, r.requestBody);
+    fs.appendFileSync(STORAGE, r.requestText);
     r.return(200);
 }
 

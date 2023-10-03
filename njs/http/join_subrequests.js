@@ -8,7 +8,7 @@ async function join_subrequests(r, subs) {
     let response = results.map(reply => ({
         uri:  reply.uri,
         code: reply.status,
-        body: reply.responseBody,
+        body: reply.responseText,
     }));
 
     r.return(200, JSON.stringify(response));
