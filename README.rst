@@ -1349,6 +1349,117 @@ Checking:
   127.0.0.2 [22/Nov/2021:18:20:24 +0000] 1
   127.0.0.2 [22/Nov/2021:18:20:25 +0000] 2
 
+Shared Dictionary
+-----------------
+
+HTTP Rate limit[http/rate-limit/simple]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In this example `js_shared_dict_zone <https://nginx.org/en/docs/http/ngx_http_js_module.html#js_shared_dict_zone>`_ is used to implement a simple rate limit and can be set in different contexts.
+The rate limit is implemented using a shared dictionary zone and a simple javascript function that is called for each request and increments the counter for the current window.
+If the counter exceeds the limit, the function returns the number of seconds until the end of the window. The function is called using
+`js_set <https://nginx.org/en/docs/http/ngx_http_js_module.html#js_set>`_ and the result is stored in a variable that is used to return a 429 response if the limit is exceeded.
+
+nginx.conf:
+
+.. code-block:: nginx
+
+    http {
+      js_path "/etc/nginx/njs/";
+      js_import main from http/rate-limit/simple.js;
+      # optionally set timeout so NJS resets and deletes all data for ratelimit counters
+      js_shared_dict_zone zone=kv:1M timeout=3600s evict;
+
+      server {
+        listen 80;
+        server_name www.example.com;
+        # access_log off;
+        js_var $rl_zone_name kv;          # shared dict zone name; requred variable
+        js_var $rl_windows_ms 30000;      # optional window in miliseconds; default 1 minute window if not set
+        js_var $rl_limit 10;              # optional limit for the window; default 10 requests if not set
+        js_var $rl_key $remote_addr;      # rate limit key; default remote_addr if not set
+        js_set $rl_result main.ratelimit; # call ratelimit function that returns retry-after value if limit is exceeded
+
+        location = / {
+          # test rate limit result
+          if ($rl_result != "0") {
+            add_header Retry-After $rl_result always;
+            return 429 "Too Many Requests.";
+          }
+          # Your normal processing here
+          return 200 "hello world";
+        }
+      }
+    }
+
+example.js:
+
+.. code-block:: js
+
+    const defaultResponse = "0";
+    function ratelimit(r) {
+        const zone = r.variables['rl_zone_name'];
+        const kv = zone && ngx.shared && ngx.shared[zone];
+        if (!kv) {
+            r.log(`ratelimit: ${zone} js_shared_dict_zone not found`);
+            return defaultResponse;
+        }
+
+        const key = r.variables['rl_key'] || r.variables['remote_addr'];
+        const window = Number(r.variables['rl_windows_ms']) || 60000;
+        const limit = Number(r.variables['rl_limit']) || 10;
+        const now = Date.now();
+
+        let requestData = kv.get(key);
+        if (requestData === undefined || requestData.length === 0) {
+            requestData = { timestamp: now, count: 1 }
+            kv.set(key, JSON.stringify(requestData));
+            return defaultResponse;
+        }
+        try {
+            requestData = JSON.parse(requestData);
+        } catch (e) {
+            requestData = { timestamp: now, count: 1 }
+            kv.set(key, JSON.stringify(requestData));
+            return defaultResponse;
+        }
+        if (!requestData) {
+            requestData = { timestamp: now, count: 1 }
+            kv.set(key, JSON.stringify(requestData));
+            return defaultResponse;
+        }
+        if (now - requestData.timestamp >= window) {
+            requestData.timestamp = now;
+            requestData.count = 1;
+        } else {
+            requestData.count++;
+        }
+        const elapsed = now - requestData.timestamp;
+        r.log(`limit: ${limit} window: ${window} elapsed: ${elapsed}  count: ${requestData.count} timestamp: ${requestData.timestamp}`)
+        let retryAfter = 0;
+        if (requestData.count > limit) {
+            retryAfter = Math.ceil((window - elapsed) / 1000);
+        }
+        kv.set(key, JSON.stringify(requestData));
+        return retryAfter.toString();
+    }
+
+    export default { ratelimit };
+
+
+.. code-block:: shell
+
+  curl http://localhost
+  200 hello world
+
+  curl http://localhost
+  200 hello world
+
+  # 3rd request should fail according to the rate limit $rl_limit=2
+  curl http://localhost
+  429 rate limit exceeded
+
+
 NGINX-PLUS API
 --------------
 
