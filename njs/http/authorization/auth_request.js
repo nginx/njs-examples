@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 function authorize(r) {
     var signature = r.headersIn.Signature;
 
@@ -15,7 +17,7 @@ function authorize(r) {
 
     var args = r.variables.args;
 
-    var h = require('crypto').createHmac('sha1', process.env.SECRET_KEY);
+    var h = crypto.createHmac('sha1', process.env.SECRET_KEY);
 
     h.update(r.uri).update(args ? args : "");
 

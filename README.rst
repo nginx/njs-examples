@@ -498,12 +498,14 @@ example.js:
 
 .. code-block:: js
 
+  import crypto from 'crypto';
+
   function secret_key(r) {
       return process.env.SECRET_KEY;
   }
 
   function create_secure_link(r) {
-      return require('crypto').createHash('md5')
+      return crypto.createHash('md5')
                               .update(r.uri).update(process.env.SECRET_KEY)
                               .digest('base64url');
   }
@@ -579,6 +581,8 @@ example.js:
 
 .. code-block:: js
 
+    import crypto from 'crypto';
+
     function authorize(r) {
         var signature = r.headersIn.Signature;
 
@@ -596,7 +600,7 @@ example.js:
 
         var args = r.variables.args;
 
-        var h = require('crypto').createHmac('sha1', process.env.SECRET_KEY);
+        var h = crypto.createHmac('sha1', process.env.SECRET_KEY);
 
         h.update(r.uri).update(args ? args : "");
 
@@ -694,6 +698,8 @@ example.js:
 
 .. code-block:: js
 
+    import crypto from 'crypto';
+
     function authorize(r) {
         var signature = r.headersIn.Signature;
 
@@ -702,7 +708,7 @@ example.js:
             return;
         }
 
-        var h = require('crypto').createHmac('sha1', process.env.SECRET_KEY);
+        var h = crypto.createHmac('sha1', process.env.SECRET_KEY);
 
         h.update(r.uri);
 
@@ -1757,7 +1763,7 @@ example.js:
 
 .. code-block:: js
 
-  var fs = require('fs');
+  import fs from 'fs';
   var STORAGE = "/tmp/njs_storage"
 
   function push(r) {
