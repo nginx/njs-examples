@@ -81,7 +81,7 @@ nginx.conf:
    }
  }
 
-example.js:
+http/hello.js:
 
 .. code-block:: js
 
@@ -90,6 +90,16 @@ example.js:
   }
 
   export default {hello}
+
+utils.js:
+
+.. code-block:: js
+
+  function version(r) {
+    r.return(200, njs.version);
+  }
+
+  export default {version}
 
 Checking:
 
