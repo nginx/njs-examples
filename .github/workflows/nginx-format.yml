@@ -1,0 +1,38 @@
+name: Nginx Format
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "conf/**/*.conf"
+      - ".github/workflows/nginx-format.yml"
+  pull_request:
+    paths:
+      - "conf/**/*.conf"
+      - ".github/workflows/nginx-format.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nginx-format-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Check Nginx configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Check Nginx formatting
+        uses: soulteary/nginx-format-action@483f27d8115f4044a83a099839eb1cffdb9e0da4 # v1.1.0
+        with:
+          path: conf
+          mode: check
+          indent: 4
+          indent-char: space
+          version: v2.6.1
